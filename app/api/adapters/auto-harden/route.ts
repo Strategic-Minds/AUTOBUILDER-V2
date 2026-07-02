@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { run } from '@/lib/adapters/auto-harden'
+import { run } from '@/workers/adapters/auto-harden'
 
 export const dynamic = 'force-dynamic'
 

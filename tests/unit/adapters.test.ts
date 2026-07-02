@@ -6,13 +6,13 @@ import assert from 'node:assert/strict'
 // via scripts/run_all_adapters.ts against a real (or staging) Supabase project.
 
 test('seo scoring: full valid task scores 100', async () => {
-  const mod = await import('../../lib/adapters/seo')
+  const mod = await import('../../workers/adapters/seo')
   // scoreTask isn't exported directly; exercise via the module's internal shape by re-implementing the contract check
   assert.ok(mod.run, 'seo adapter exports run()')
 })
 
 test('hardening: scanForSecrets flags an obvious fake key pattern', async () => {
-  const { scanForSecrets } = await import('../../lib/security/hardening')
+  const { scanForSecrets } = await import('../../packages/security/hardening')
   const fs = await import('fs/promises')
   const os = await import('os')
   const path = await import('path')
@@ -27,7 +27,7 @@ test('hardening: scanForSecrets flags an obvious fake key pattern', async () => 
 })
 
 test('hardening: scanForSecrets finds nothing in a clean file', async () => {
-  const { scanForSecrets } = await import('../../lib/security/hardening')
+  const { scanForSecrets } = await import('../../packages/security/hardening')
   const fs = await import('fs/promises')
   const os = await import('os')
   const path = await import('path')
@@ -38,7 +38,7 @@ test('hardening: scanForSecrets finds nothing in a clean file', async () => {
 })
 
 test('hardening: env.example.md is never itself flagged as a secret', async () => {
-  const { scanForSecrets } = await import('../../lib/security/hardening')
+  const { scanForSecrets } = await import('../../packages/security/hardening')
   const fs = await import('fs/promises')
   const os = await import('os')
   const path = await import('path')
@@ -54,7 +54,7 @@ test('all 12 adapters export a callable run()', async () => {
     'quality-scan', 'auto-fix', 'auto-heal', 'auto-harden', 'competitor-intel', 'template-intel',
   ]
   for (const name of names) {
-    const mod = await import(`../../lib/adapters/${name}`)
+    const mod = await import(`../../workers/adapters/${name}`)
     assert.equal(typeof mod.run, 'function', `${name} exports run()`)
   }
 })

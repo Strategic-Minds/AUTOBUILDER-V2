@@ -1,0 +1,17 @@
+{
+  "entity": "AgentRegistry",
+  "fields": [
+    "agent_name",
+    "agent_slug",
+    "role",
+    "agent_type",
+    "status",
+    "skills_used",
+    "reads_from",
+    "writes_to",
+    "last_active_at",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

@@ -1,0 +1,15 @@
+{
+  "entity": "RepairQueue",
+  "fields": [
+    "repair_id",
+    "related_project_id",
+    "defect_description",
+    "repair_action",
+    "status",
+    "assigned_agent",
+    "resolved_at",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

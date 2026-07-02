@@ -1,0 +1,16 @@
+{
+  "entity": "ApprovalQueue",
+  "fields": [
+    "approval_id",
+    "related_project_id",
+    "approval_type",
+    "requested_by",
+    "status",
+    "requested_at",
+    "decided_at",
+    "decided_by",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

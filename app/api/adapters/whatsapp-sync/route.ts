@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { run } from '@/lib/adapters/whatsapp-sync'
+import { run } from '@/workers/adapters/whatsapp-sync'
 
 export const dynamic = 'force-dynamic'
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { run } from '@/lib/adapters/quality-scan'
+import { run } from '@/workers/adapters/quality-scan'
 
 export const dynamic = 'force-dynamic'
 

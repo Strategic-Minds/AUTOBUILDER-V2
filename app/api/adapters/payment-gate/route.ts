@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { run } from '@/lib/adapters/payment-gate'
+import { run } from '@/workers/adapters/payment-gate'
 
 export const dynamic = 'force-dynamic'
 

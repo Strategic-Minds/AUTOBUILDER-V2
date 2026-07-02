@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs'
 import path from 'path'
-import { scanForSecrets, checkEnvCoverage } from '../lib/security/hardening'
+import { scanForSecrets, checkEnvCoverage } from '../packages/security/hardening'
 
 const ROOT = process.cwd()
 
@@ -42,8 +42,8 @@ async function main() {
     name: 'Governance and approvals', max: 10, checks: [
       { label: 'Master control docs present', pass: fileExists('docs/00_Master_Control/MASTER_MANIFEST.md'), note: 'docs/00_Master_Control' },
       { label: 'CRON_SECRET gate present in adapter routes', pass: fileContains('app/api/adapters/content-gen/route.ts', 'CRON_SECRET'), note: 'route auth guard' },
-      { label: 'Payment gate requires approval before proceeding', pass: fileContains('lib/adapters/payment-gate.ts', "status', 'approved'"), note: 'factory_approvals check' },
-      { label: 'No unconditional live-send code paths in messaging adapters', pass: !fileContains('lib/adapters/whatsapp-sync.ts', 'sendMessage') && !fileContains('lib/adapters/social.ts', 'publishPost'), note: 'grep for send/publish calls' },
+      { label: 'Payment gate requires approval before proceeding', pass: fileContains('workers/adapters/payment-gate.ts', "status', 'approved'"), note: 'factory_approvals check' },
+      { label: 'No unconditional live-send code paths in messaging adapters', pass: !fileContains('workers/adapters/whatsapp-sync.ts', 'sendMessage') && !fileContains('workers/adapters/social.ts', 'publishPost'), note: 'grep for send/publish calls' },
     ],
   })
 
@@ -85,7 +85,7 @@ async function main() {
     name: 'Supabase memory/queues/RLS', max: 10, checks: [
       { label: `RLS enabled on core tables in migration (${rlsCount} tables)`, pass: rlsCount >= 8, note: 'schema SQL' },
       { label: 'Live Supabase reachable with service-role key', pass: !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY, note: 'env configured' },
-      { label: 'Adapters write receipts (audit trail) not raw mutations only', pass: fileContains('lib/adapters/base.ts', "factory_receipts"), note: 'lib/adapters/base.ts' },
+      { label: 'Adapters write receipts (audit trail) not raw mutations only', pass: fileContains('workers/adapters/base.ts', "factory_receipts"), note: 'workers/adapters/base.ts' },
     ],
   })
 
@@ -112,14 +112,14 @@ async function main() {
       { label: 'playwright.config.ts present', pass: fileExists('playwright.config.ts'), note: 'playwright.config.ts' },
       { label: 'e2e test file present', pass: fileExists('tests/dashboard.spec.ts'), note: 'tests/dashboard.spec.ts' },
       { label: 'unit tests present', pass: fileExists('tests/unit/adapters.test.ts'), note: 'tests/unit' },
-      { label: 'auto-heal adapter present with iteration cap', pass: fileContains('lib/adapters/auto-heal.ts', 'MAX_ITERATIONS'), note: 'lib/adapters/auto-heal.ts' },
+      { label: 'auto-heal adapter present with iteration cap', pass: fileContains('workers/adapters/auto-heal.ts', 'MAX_ITERATIONS'), note: 'workers/adapters/auto-heal.ts' },
     ],
   })
 
   // 9. Competitive intelligence
   categories.push({
     name: 'Competitive intelligence', max: 7, checks: [
-      { label: 'competitor-intel adapter present', pass: fileExists('lib/adapters/competitor-intel.ts'), note: 'lib/adapters/competitor-intel.ts' },
+      { label: 'competitor-intel adapter present', pass: fileExists('workers/adapters/competitor-intel.ts'), note: 'workers/adapters/competitor-intel.ts' },
       { label: 'docs section present', pass: fileExists('docs/09_Competitive_Intelligence/COMPETITIVE_INTELLIGENCE_AUTOPILOT.md'), note: 'docs/09' },
     ],
   })
@@ -127,8 +127,8 @@ async function main() {
   // 10. Omnichannel/WhatsApp/SMS/email
   categories.push({
     name: 'Omnichannel/WhatsApp/SMS/email', max: 8, checks: [
-      { label: 'whatsapp-sync adapter present', pass: fileExists('lib/adapters/whatsapp-sync.ts'), note: 'lib/adapters/whatsapp-sync.ts' },
-      { label: 'consent check present before processing', pass: fileContains('lib/adapters/whatsapp-sync.ts', 'wa_consent_ledger'), note: 'consent gate' },
+      { label: 'whatsapp-sync adapter present', pass: fileExists('workers/adapters/whatsapp-sync.ts'), note: 'workers/adapters/whatsapp-sync.ts' },
+      { label: 'consent check present before processing', pass: fileContains('workers/adapters/whatsapp-sync.ts', 'wa_consent_ledger'), note: 'consent gate' },
       { label: 'docs section present', pass: fileExists('docs/13_WhatsApp_Omnichannel/WHATSAPP_OMNICHANNEL_GATEWAY.md'), note: 'docs/13' },
     ],
   })
@@ -149,7 +149,7 @@ async function main() {
     name: 'Security/compliance/secrets', max: 8, checks: [
       { label: `zero secret findings in repo (found ${secretFindings.length})`, pass: secretFindings.length === 0, note: 'scanForSecrets()' },
       { label: `env coverage complete (${envCoverage.missing.length} undocumented vars)`, pass: envCoverage.missing.length === 0, note: 'checkEnvCoverage()' },
-      { label: 'auto-harden adapter present', pass: fileExists('lib/adapters/auto-harden.ts'), note: 'lib/adapters/auto-harden.ts' },
+      { label: 'auto-harden adapter present', pass: fileExists('workers/adapters/auto-harden.ts'), note: 'workers/adapters/auto-harden.ts' },
     ],
   })
 
@@ -187,7 +187,7 @@ async function main() {
   const criticalGates = [
     { label: 'No secrets in repo', pass: secretFindings.length === 0 },
     { label: 'RLS enabled for tenant tables (core migration)', pass: rlsCount >= 8 },
-    { label: 'Consent checked before outbound WhatsApp processing', pass: fileContains('lib/adapters/whatsapp-sync.ts', 'wa_consent_ledger') },
+    { label: 'Consent checked before outbound WhatsApp processing', pass: fileContains('workers/adapters/whatsapp-sync.ts', 'wa_consent_ledger') },
     { label: 'Production deploy approved', pass: false }, // no deploy has happened — correctly not claimed
     { label: 'Rollback exists (git history / revertable commits)', pass: true },
     { label: 'Smoke and Playwright pass', pass: fileExists('playwright-report/results.json') }, // verified: 2/2 passed against locally-served build on 2026-07-02

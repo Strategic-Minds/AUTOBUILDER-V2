@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { run } from '@/lib/adapters/image-queue'
+import { run } from '@/workers/adapters/image-queue'
 
 export const dynamic = 'force-dynamic'
 

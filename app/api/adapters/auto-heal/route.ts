@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { run } from '@/lib/adapters/auto-heal'
+import { run } from '@/workers/adapters/auto-heal'
 
 export const dynamic = 'force-dynamic'
 

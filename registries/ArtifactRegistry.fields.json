@@ -1,0 +1,15 @@
+{
+  "entity": "ArtifactRegistry",
+  "fields": [
+    "artifact_id",
+    "artifact_type",
+    "related_project_id",
+    "location_url",
+    "version",
+    "produced_by_agent",
+    "produced_at",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

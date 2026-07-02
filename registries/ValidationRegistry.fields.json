@@ -1,0 +1,15 @@
+{
+  "entity": "ValidationRegistry",
+  "fields": [
+    "validation_id",
+    "related_project_id",
+    "validation_type",
+    "status",
+    "score",
+    "details",
+    "run_at",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

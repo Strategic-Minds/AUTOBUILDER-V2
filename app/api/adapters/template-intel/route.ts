@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { run } from '@/lib/adapters/template-intel'
+import { run } from '@/workers/adapters/template-intel'
 
 export const dynamic = 'force-dynamic'
 

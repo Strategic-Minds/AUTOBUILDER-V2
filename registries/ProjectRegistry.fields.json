@@ -1,0 +1,26 @@
+{
+  "entity": "ProjectRegistry",
+  "fields": [
+    "project_id",
+    "business_name",
+    "contact_name",
+    "email",
+    "phone",
+    "package_level",
+    "lifecycle_stage",
+    "queue_state",
+    "payment_state",
+    "approval_state",
+    "revision_count",
+    "current_score",
+    "next_action",
+    "owner_agent",
+    "drive_link",
+    "repo_link",
+    "preview_link",
+    "source_of_truth_ref",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

@@ -1,0 +1,16 @@
+{
+  "entity": "HardeningQueue",
+  "fields": [
+    "hardening_id",
+    "related_project_id",
+    "finding",
+    "hardening_action",
+    "status",
+    "risk_level",
+    "assigned_agent",
+    "resolved_at",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

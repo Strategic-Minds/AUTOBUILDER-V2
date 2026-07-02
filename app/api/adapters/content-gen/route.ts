@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { run } from '@/lib/adapters/content-gen'
+import { run } from '@/workers/adapters/content-gen'
 
 export const dynamic = 'force-dynamic'
 

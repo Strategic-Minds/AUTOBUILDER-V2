@@ -1,0 +1,20 @@
+{
+  "entity": "ScoringRegistry",
+  "fields": [
+    "score_id",
+    "related_project_id",
+    "build_integrity",
+    "frontend_correctness",
+    "backend_integrity",
+    "ux_readiness",
+    "performance_readiness",
+    "hardening_security",
+    "receipt_observability",
+    "overall_score",
+    "tier",
+    "scored_at",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}
