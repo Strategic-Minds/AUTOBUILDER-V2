@@ -31,3 +31,6 @@ Shared framework: `lib/adapters/base.ts` (dry-run guard, structured result type,
 
 ## Source of truth used
 Real live Supabase schema (388 tables, inspected via PostgREST OpenAPI + information_schema-equivalent), not the smaller placeholder schema in `supabase/schema/*.sql` — those SQL files remain as the original v1 reference migration and were not altered.
+
+## Dependency vulnerability (checked, not swept under the rug)
+GitHub Dependabot flagged 1 moderate alert: PostCSS XSS via unescaped `</style>` in CSS stringify output (GHSA-qx2v-qp2m-jg93). Root cause: bundled *inside* `next@16.2.10`'s own `node_modules/next/node_modules/postcss` (build-time CSS tooling, not a runtime request path). `npm audit`'s only "fix" is downgrading `next` to `9.3.3` (semver-major regression) — not a reasonable fix. Accepted as a known, low-priority, upstream-owned risk until Next.js ships an update; revisit on next Next.js upgrade.
