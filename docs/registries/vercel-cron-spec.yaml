@@ -1,0 +1,45 @@
+schema_version: "2026-07-03"
+auth:
+  required_env: CRON_SECRET
+  unauthorized_status: 401
+  dry_run_default: true
+routes:
+  - path: /api/cron/auto-builder
+    schedule: "*/5 * * * *"
+    cadence: every_5_minutes
+    responsibilities:
+      - queue_heartbeat
+      - approval_refresh
+      - stale_job_detection
+  - path: /api/cron/enterprise-kernel
+    schedule: "*/5 * * * *"
+    cadence: every_5_minutes
+    responsibilities:
+      - registry_rehydrate
+      - validation_authority_check
+      - safe_progression_proposal
+  - path: /api/cron/quality-auto-heal
+    schedule: "*/15 * * * *"
+    cadence: every_15_minutes
+    responsibilities:
+      - artifact_sync
+      - receipt_normalization
+      - registry_reconciliation
+      - repair_queue_schedule
+      - hardening_queue_schedule
+  - path: /api/cron/intelligence-ingest
+    schedule: "0 * * * *"
+    cadence: hourly
+    responsibilities:
+      - intelligence_refresh
+      - source_sync
+      - rag_update_proposal
+      - drift_signal_collection
+nightly_jobs:
+  - repair_queue_drain
+  - hardening_queue_drain
+  - intelligence_refresh
+  - seo_sweep
+  - competitor_sweep
+  - social_image_prep
+  - morning_summary
