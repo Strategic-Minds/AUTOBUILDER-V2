@@ -1,0 +1,40 @@
+{
+  "schema_version": "2026-07-03",
+  "governance": {
+    "dry_run_default": true,
+    "receipt_required": true,
+    "protected_actions": [
+      "production_deploy",
+      "destructive_database_change",
+      "payment_execution",
+      "dns_or_domain_change",
+      "credential_or_secret_creation",
+      "live_customer_message",
+      "protected_policy_change"
+    ]
+  },
+  "registries": [
+    "SystemRegistry",
+    "AgentRegistry",
+    "ProjectRegistry",
+    "WorkflowRegistry",
+    "QueueRegistry",
+    "JobRegistry",
+    "ApprovalQueue",
+    "ArtifactRegistry",
+    "ValidationRegistry",
+    "ScoringRegistry",
+    "RepairQueue",
+    "HardeningQueue",
+    "CronRegistry",
+    "DriftRegistry",
+    "NotificationRegistry"
+  ],
+  "write_policy": {
+    "default": "branch_or_dry_run",
+    "safe_low_risk": "validator_authorized_with_receipt",
+    "protected": "human_approval_required"
+  },
+  "rehydrate_required_before_meaningful_work": true,
+  "dehydrate_required_after_meaningful_work": true
+}
