@@ -1,0 +1,29 @@
+schema_version: "2026-07-03"
+required_fields:
+  - role
+  - phase
+  - source_truth
+  - allowed_actions
+  - protected_actions
+  - required_artifacts
+  - validation_gates
+  - receipt_requirements
+  - rehydrate_inputs
+  - dehydrate_outputs
+  - escalation_rules
+families:
+  - intake
+  - architecture_planning
+  - builder_doc_generation
+  - template_selection
+  - mockup_translation
+  - validation
+  - scoring
+  - repair
+  - hardening
+  - release_readiness
+  - registry_updates
+  - sync_operations
+  - operator_escalation
+  - overnight_execution
+  - drift_detection
