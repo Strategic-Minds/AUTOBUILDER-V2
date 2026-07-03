@@ -1,0 +1,37 @@
+schema_version: "2026-07-03"
+thresholds:
+  mvp: 70
+  production: 85
+  enterprise: 95
+critical_failure_policy: block
+categories:
+  build_integrity:
+    weight: 20
+    checks: [install, lint, typecheck, build, route_parity]
+  frontend_correctness:
+    weight: 15
+    checks: [responsive_layout, no_overlap, screenshot_evidence, mockup_parity_if_applicable]
+  backend_api_integrity:
+    weight: 15
+    checks: [auth, dry_run_response, mcp_contract, cron_contract]
+  ux_readiness:
+    weight: 10
+    checks: [primary_flow, empty_state, loading_state, error_state]
+  performance_readiness:
+    weight: 10
+    checks: [basic_page_load, bundle_warning, route_health]
+  hardening_security_basics:
+    weight: 15
+    checks: [rls, no_secret_leak, protected_action_gate, rollback_ready]
+  receipts_observability_quality:
+    weight: 15
+    checks: [receipt_present, evidence_linked, next_action, blocker_classified]
+validator_authority:
+  can_advance_safe_low_risk: true
+  cannot_approve:
+    - production_deploy
+    - destructive_change
+    - payment_execution
+    - dns_change
+    - secret_creation
+    - protected_policy_change
