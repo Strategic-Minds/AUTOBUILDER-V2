@@ -1,0 +1,27 @@
+schema_version: "2026-07-03"
+bridges:
+  - id: drive_bridge
+    target: Google Drive
+    allowed: [read_docs, create_draft_docs, upload_receipts]
+    gated: [delete_files, move_canonical_folders, share_external]
+    receipt_required: true
+  - id: github_bridge
+    target: GitHub
+    allowed: [read_repos, create_branch, create_draft_pr, write_branch_files]
+    gated: [merge_pr, delete_branch, write_default_branch]
+    receipt_required: true
+  - id: supabase_bridge
+    target: Supabase
+    allowed: [status, read, staged_migration_plan, dry_run_rpc]
+    gated: [write_live_data, execute_raw_sql, destructive_migration, secret_change]
+    receipt_required: true
+  - id: vercel_bridge
+    target: Vercel
+    allowed: [read_project, create_preview_plan, dry_run_cron, inspect_logs_when_available]
+    gated: [production_deploy, env_secret_change, domain_change]
+    receipt_required: true
+  - id: internal_agent_bridge
+    target: GPT workspace agents
+    allowed: [handoff, status, validation_request, receipt_request]
+    gated: [policy_change, protected_action_approval]
+    receipt_required: true
