@@ -1,0 +1,37 @@
+schema_version: "2026-07-03"
+queue_states:
+  - on_deck
+  - active
+  - waiting_approval
+  - validating
+  - fixing
+  - hardening
+  - ready_for_next_step
+  - maintenance
+  - blocked
+  - complete
+  - archived
+lifecycle:
+  - intake
+  - discovery
+  - strategy
+  - package_approval
+  - mvp_build
+  - validation
+  - revision
+  - launch_prep
+  - maintenance
+  - optimization
+transition_rules:
+  require_receipt: true
+  require_next_action: true
+  require_validation_for:
+    - validating
+    - ready_for_next_step
+    - complete
+  protected_transitions:
+    - launch_prep_to_production
+    - destructive_database_change
+    - dns_change
+    - payment_action
+    - secret_creation
