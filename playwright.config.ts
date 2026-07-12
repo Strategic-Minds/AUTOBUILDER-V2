@@ -1,36 +1,45 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Part 9: Real Playwright config
- * Headless by default for CI. Headful when PW_HEADED=1.
- * Does NOT require OpenAI key.
+ * WP-3: Preview-only Playwright config.
+ * PLAYWRIGHT_BASE_URL MUST be explicitly supplied — no production fallback.
+ * Fails workflow if absent.
  */
+
+const baseURL = process.env.PLAYWRIGHT_BASE_URL;
+if (!baseURL) {
+  throw new Error(
+    'PLAYWRIGHT_BASE_URL is required. ' +
+    'Provide a Vercel preview URL or dedicated test URL. ' +
+    'Production testing requires a separate approved smoke-test plan.'
+  );
+}
+
 export default defineConfig({
   testDir: './e2e',
+  fullyParallel: false,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  workers: 1,
   timeout: 30_000,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'playwright-results.json' }],
     ['junit', { outputFile: 'playwright-junit.xml' }],
+    ['list'],
   ],
   use: {
-    headless: process.env.PW_HEADED !== '1',
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://www.autobuilderos.com',
+    headless: true,
+    baseURL,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'retain-on-failure',
+    actionTimeout: 10_000,
+    navigationTimeout: 15_000,
   },
   projects: [
-    {
-      name: 'chromium-headless',
-      use: { ...devices['Desktop Chrome'], headless: true },
-    },
-    {
-      name: 'mobile-chrome',
-      use: { ...devices['Pixel 5'] },
-    },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], headless: true } },
+    { name: 'mobile-chrome', use: { ...devices['Pixel 5'] } },
   ],
 });
 

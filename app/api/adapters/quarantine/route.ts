@@ -1,155 +1,86 @@
 /**
- * WP-11: Enforced Quarantine
- * Quarantine is an executing control — not just a record store.
- * Stops jobs, revokes leases, preserves evidence, blocks promotion.
+ * WP-11 + WP-2: Enforced Quarantine with internal auth guard.
+ * Auth executes BEFORE all operations including synthetic tests.
+ * GET returns count summary only — never raw internal records.
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { authorizeInternalRequest } from '@/lib/internal-auth';
 export const dynamic = 'force-dynamic';
 
 const SB  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const sbH = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
 
-const QUARANTINE_TRIGGERS = [
-  'secret_exposure','production_access_from_test','unauthorized_file_path',
-  'unauthorized_database_surface','cross_tenant_access','rls_failure',
-  'prompt_injection','ssrf_attempt','suspicious_dependency','unknown_binary',
-  'artifact_hash_mismatch','missing_provenance','repeated_repair_failure',
-  'cost_overrun','destructive_action_attempt',
-] as const;
-
+const QUARANTINE_TRIGGERS = ['secret_exposure','production_access_from_test','unauthorized_file_path','unauthorized_database_surface','cross_tenant_access','rls_failure','prompt_injection','ssrf_attempt','suspicious_dependency','unknown_binary','artifact_hash_mismatch','missing_provenance','repeated_repair_failure','cost_overrun','destructive_action_attempt'] as const;
 type QuarantineTrigger = typeof QUARANTINE_TRIGGERS[number];
 
-async function sb(path: string, method = 'GET', body?: unknown) {
-  const r = await fetch(`${SB}/rest/v1/${path}`, { method, headers: sbH, body: body ? JSON.stringify(body) : undefined });
-  const text = await r.text();
-  return { ok: r.ok, status: r.status, data: text ? JSON.parse(text) : null };
+async function sb<T = unknown>(path: string, method = 'GET', body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
+  try {
+    const res = await fetch(`${SB}/rest/v1/${path}`, { method, headers: sbH, body: body ? JSON.stringify(body) : undefined });
+    const text = await res.text();
+    let data: T | null = null;
+    try { data = text ? JSON.parse(text) as T : null; } catch { data = text as unknown as T; }
+    return { ok: res.ok, status: res.status, data, error: res.ok ? null : text.slice(0, 400) };
+  } catch (e) { return { ok: false, status: 0, data: null, error: e instanceof Error ? e.message : String(e) }; }
 }
 
-async function enforceQuarantine(opts: {
-  jobId: string; trigger: QuarantineTrigger; severity: 'CRITICAL' | 'HIGH' | 'MEDIUM';
-  evidence: Record<string, unknown>; dependentJobIds?: string[];
-}): Promise<{ quarantineId: string; stopped: number; blocked: boolean }> {
-
-  // 1. Stop active job immediately
-  const stopRes = await sb(`factory_jobs?job_id=eq.${opts.jobId}`, 'PATCH', {
-    status: 'quarantined', lease_owner: null, lease_expires_at: null,
-    last_error: `QUARANTINED: ${opts.trigger}`,
-  });
-
-  // 2. Stop dependent jobs
-  let stopped = stopRes.ok ? 1 : 0;
-  if (opts.dependentJobIds && opts.dependentJobIds.length > 0) {
-    for (const depId of opts.dependentJobIds) {
-      const depStop = await sb(`factory_jobs?job_id=eq.${depId}&status=in.(queued,leased,running)`, 'PATCH', {
-        status: 'quarantined', last_error: `QUARANTINED: dependent on ${opts.jobId}`,
-      });
-      if (depStop.ok) stopped++;
-    }
-  }
-
-  // 3. Create quarantine record
-  const qrn = await sb('factory_quarantine', 'POST', {
-    job_id: opts.jobId, trigger_rule: opts.trigger, severity: opts.severity,
-    evidence: { ...opts.evidence, ts: new Date().toISOString() },
-    workspace_preserved: true, logs_preserved: true, promotion_blocked: true,
-    status: 'active',
-    remediation_packet: {
-      required_clearance: 'independent_security_agent',
-      steps: ['Preserve evidence', 'Root cause analysis', 'Fix trigger condition', 'Independent review', 'Manual clearance'],
-    },
-  });
-
-  const qrnId = Array.isArray(qrn.data) ? qrn.data[0]?.quarantine_id : `QRN-${Date.now()}`;
-
-  // 4. Write quarantine receipt
-  await sb('factory_receipts', 'POST', {
-    receipt_type: 'quarantine', status: 'success', produced_by: 'quarantine-engine',
-    action_summary: `QUARANTINE[${qrnId}]: ${opts.trigger} — job ${opts.jobId} stopped`,
-    evidence: { quarantine_id: qrnId, trigger: opts.trigger, jobs_stopped: stopped, ...opts.evidence },
-    rollback_available: false,
-  });
-
-  return { quarantineId: qrnId, stopped, blocked: true };
+async function enforceQuarantine(jobId: string, trigger: QuarantineTrigger, severity: string, evidence: Record<string,unknown>, depIds: string[] = []) {
+  // Stop the job
+  await sb(`factory_jobs?job_id=eq.${jobId}`, 'PATCH', { status: 'quarantined', lease_owner: null, lease_expires_at: null, last_error: `QUARANTINED:${trigger}` });
+  // Stop dependents
+  for (const dep of depIds) await sb(`factory_jobs?job_id=eq.${dep}&status=in.(queued,leased,running)`, 'PATCH', { status: 'quarantined', last_error: `QUARANTINED:dependent_of_${jobId}` });
+  // Create quarantine record
+  const qrn = await sb<Array<{ quarantine_id: string }>>('factory_quarantine', 'POST', { job_id: jobId, trigger_rule: trigger, severity, evidence: { ...evidence, ts: new Date().toISOString() }, workspace_preserved: true, logs_preserved: true, promotion_blocked: true, status: 'active', remediation_packet: { required_clearance: 'independent_security_agent', steps: ['Preserve evidence','Root cause','Fix trigger','Independent review','Manual clearance'] } });
+  const qrnId = Array.isArray(qrn.data) && qrn.data[0] ? qrn.data[0].quarantine_id : `QRN-${Date.now()}`;
+  // Verify quarantine record exists and promotion IS blocked
+  const verify = await sb<Array<{ status: string; promotion_blocked: boolean }>>(`factory_quarantine?quarantine_id=eq.${qrnId}&select=status,promotion_blocked`);
+  const verified = Array.isArray(verify.data) && verify.data[0]?.promotion_blocked === true;
+  // Write receipt
+  const rcp = await sb<Array<{ receipt_id: string }>>('factory_receipts', 'POST', { receipt_type: 'quarantine', status: 'success', produced_by: 'quarantine-engine', action_summary: `QUARANTINE[${qrnId}]: ${trigger} — ${jobId}`, evidence: { quarantine_id: qrnId, trigger, job_id: jobId, promotion_blocked: true, verified }, rollback_available: false });
+  const rcpId = Array.isArray(rcp.data) && rcp.data[0] ? rcp.data[0].receipt_id : null;
+  return { quarantine_id: qrnId, blocked: true, verified, receipt_id: rcpId };
 }
 
 export async function POST(req: NextRequest) {
+  // WP-2: Auth FIRST — before reading body, before synthetic tests, before any DB op
+  const auth = authorizeInternalRequest(req, 'jobs:quarantine');
+  if (!auth.ok) return new Response(JSON.stringify({ ok: false, state: auth.state, error: auth.error }), { status: auth.http_status });
+
+  const env = process.env.VERCEL_ENV || process.env.NODE_ENV || 'unknown';
   const body = await req.json().catch(() => ({}));
   const { job_id, trigger, severity = 'HIGH', evidence = {}, dependent_job_ids = [], test_scenario } = body;
 
-  // Run synthetic tests if requested
+  // Synthetic tests only in test/preview
   if (test_scenario) {
+    if (!['test','preview','development'].includes(env)) {
+      return NextResponse.json({ ok: false, error: 'Synthetic tests only allowed in test/preview environments', env }, { status: 403 });
+    }
     const results: Record<string, unknown> = {};
-
-    if (test_scenario === 'secret_exposure' || test_scenario === 'all') {
-      // Synthetic: create a test job then quarantine it for secret exposure
-      const testJob = await sb('factory_jobs', 'POST', {
-        job_type: 'test-quarantine-secret', queue_name: 'build',
-        title: 'SYNTHETIC: Secret exposure test', status: 'running',
-        idempotency_key: `qtest-secret-${Date.now()}`,
-        input_payload: { contains_secret: true, test: true },
-      });
-      const testJobId = Array.isArray(testJob.data) ? testJob.data[0]?.job_id : null;
-      if (testJobId) {
-        const qResult = await enforceQuarantine({
-          jobId: testJobId, trigger: 'secret_exposure', severity: 'CRITICAL',
-          evidence: { test: true, scenario: 'synthetic_secret_exposure', detected_pattern: 'MOCK_API_KEY_DETECTED' },
-        });
-        results.secret_exposure = { PASS: qResult.blocked, ...qResult };
+    const scenarios = test_scenario === 'all' ? ['secret_exposure','repeated_repair_failure','unauthorized_path'] : [test_scenario];
+    for (const sc of scenarios) {
+      const tj = await sb<Array<{ job_id: string }>>('factory_jobs', 'POST', { job_type: `test-qrn-${sc}`, queue_name: 'build', title: `SYNTHETIC:${sc}`, status: 'running', idempotency_key: `qtest-${sc}-${Date.now()}`, input_payload: { test: true, scenario: sc } });
+      const tjId = Array.isArray(tj.data) && tj.data[0] ? tj.data[0].job_id : null;
+      if (tjId) {
+        const r = await enforceQuarantine(tjId, sc as QuarantineTrigger, 'HIGH', { test: true, scenario: sc });
+        results[sc] = { PASS: r.verified, ...r };
       }
     }
-
-    if (test_scenario === 'repeated_repair_failure' || test_scenario === 'all') {
-      const testJob = await sb('factory_jobs', 'POST', {
-        job_type: 'test-quarantine-repair', queue_name: 'repair',
-        title: 'SYNTHETIC: Repeated repair failure test', status: 'failed',
-        idempotency_key: `qtest-repair-${Date.now()}`,
-        attempt_count: 3, max_attempts: 3,
-      });
-      const testJobId = Array.isArray(testJob.data) ? testJob.data[0]?.job_id : null;
-      if (testJobId) {
-        const qResult = await enforceQuarantine({
-          jobId: testJobId, trigger: 'repeated_repair_failure', severity: 'HIGH',
-          evidence: { test: true, scenario: 'synthetic_repair_exhausted', attempts: 3 },
-        });
-        results.repeated_repair = { PASS: qResult.blocked, ...qResult };
-      }
-    }
-
-    if (test_scenario === 'unauthorized_path' || test_scenario === 'all') {
-      const testJob = await sb('factory_jobs', 'POST', {
-        job_type: 'test-quarantine-path', queue_name: 'build',
-        title: 'SYNTHETIC: Unauthorized path test', status: 'running',
-        idempotency_key: `qtest-path-${Date.now()}`,
-        input_payload: { attempted_path: '/etc/passwd', test: true },
-      });
-      const testJobId = Array.isArray(testJob.data) ? testJob.data[0]?.job_id : null;
-      if (testJobId) {
-        const qResult = await enforceQuarantine({
-          jobId: testJobId, trigger: 'unauthorized_file_path', severity: 'CRITICAL',
-          evidence: { test: true, scenario: 'path_traversal_attempt', attempted_path: '/etc/passwd' },
-        });
-        results.unauthorized_path = { PASS: qResult.blocked, ...qResult };
-      }
-    }
-
-    return NextResponse.json({ ok: true, test_scenario, results });
+    return NextResponse.json({ ok: true, test_scenario, results, request_id: auth.request_id });
   }
 
-  // Real quarantine
-  if (!job_id || !trigger) {
-    return NextResponse.json({ error: 'job_id and trigger required' }, { status: 400 });
-  }
-  if (!QUARANTINE_TRIGGERS.includes(trigger)) {
-    return NextResponse.json({ error: `trigger must be one of: ${QUARANTINE_TRIGGERS.join(', ')}` }, { status: 400 });
-  }
+  if (!job_id || !trigger) return NextResponse.json({ error: 'job_id and trigger required' }, { status: 400 });
+  if (!QUARANTINE_TRIGGERS.includes(trigger)) return NextResponse.json({ error: `invalid trigger` }, { status: 400 });
 
-  const result = await enforceQuarantine({ jobId: job_id, trigger, severity, evidence, dependentJobIds: dependent_job_ids });
-  return NextResponse.json({ ok: true, ...result });
+  const result = await enforceQuarantine(job_id, trigger, severity, evidence, dependent_job_ids);
+  return NextResponse.json({ ok: true, ...result, request_id: auth.request_id });
 }
 
-export async function GET() {
-  const active = await sb('factory_quarantine?status=eq.active&select=quarantine_id,trigger_rule,severity,quarantined_at&order=quarantined_at.desc&limit=20');
-  return NextResponse.json({ quarantine_engine: 'WP-11 active', active_records: active.data || [] });
+// WP-2: GET returns count summary only — NOT raw records
+export async function GET(req: NextRequest) {
+  const auth = authorizeInternalRequest(req, 'jobs:quarantine');
+  if (!auth.ok) return new Response(JSON.stringify({ ok: false, state: auth.state }), { status: auth.http_status });
+  const active = await sb<Array<unknown>>('factory_quarantine?status=eq.active&select=quarantine_id&limit=100');
+  const cleared = await sb<Array<unknown>>('factory_quarantine?status=eq.cleared&select=quarantine_id&limit=100');
+  return NextResponse.json({ quarantine_summary: { active_count: Array.isArray(active.data) ? active.data.length : 0, cleared_count: Array.isArray(cleared.data) ? cleared.data.length : 0 }, request_id: auth.request_id });
 }
 

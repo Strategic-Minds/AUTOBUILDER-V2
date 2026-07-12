@@ -1,9 +1,10 @@
 /**
- * WP-10: Executable Auto-Heal Engine
- * Controlled runtime recovery. Never hides failures.
- * Every action proves: failure existed → detected → recovered → receipt written.
+ * WP-10 + WP-2: Executable Auto-Heal Engine with internal auth guard.
+ * Auth executes BEFORE reading request data or touching DB.
+ * Proves before AND after state via separate read.
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { authorizeInternalRequest } from '@/lib/internal-auth';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
@@ -11,130 +12,77 @@ const SB  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const sbH = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
 
-async function sbOp(path: string, method = 'GET', body?: unknown) {
-  const r = await fetch(`${SB}/rest/v1/${path}`, { method, headers: sbH, body: body ? JSON.stringify(body) : undefined });
-  const text = await r.text();
-  let data = null;
-  try { data = JSON.parse(text); } catch { data = text; }
-  return { ok: r.ok, status: r.status, data };
+async function sbOp<T = unknown>(path: string, method = 'GET', body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
+  try {
+    const res = await fetch(`${SB}/rest/v1/${path}`, { method, headers: sbH, body: body ? JSON.stringify(body) : undefined });
+    const text = await res.text();
+    let data: T | null = null;
+    try { data = text ? JSON.parse(text) as T : null; } catch { data = text as unknown as T; }
+    return { ok: res.ok, status: res.status, data, error: res.ok ? null : text.slice(0, 400) };
+  } catch (e) { return { ok: false, status: 0, data: null, error: e instanceof Error ? e.message : String(e) }; }
 }
 
-interface HealAction {
-  trigger: string; diagnosis: string; action: string;
-  safety_justification: string; before_state: unknown; after_state?: unknown;
-  verification?: string; receipt_id?: string; rollback_target?: string;
-}
-
-async function writeHealReceipt(runId: string, action: HealAction, success: boolean) {
-  const res = await sbOp('factory_receipts', 'POST', {
-    receipt_type: 'auto-heal', status: success ? 'success' : 'failure',
-    produced_by: 'auto-heal-engine',
-    action_summary: `Heal[${runId}]: ${action.action} for ${action.trigger}`,
-    evidence: { run_id: runId, ...action, ts: new Date().toISOString() },
-    rollback_available: !!action.rollback_target,
-    rollback_ref: action.rollback_target,
-  });
-  return Array.isArray(res.data) ? res.data[0]?.receipt_id : null;
-}
+interface HealResult { trigger: string; job_id: string; before: Record<string,unknown>; after: Record<string,unknown>; receipt_id: string | null; verified: boolean; }
 
 export async function POST(req: NextRequest) {
-  const runId = `AH-${Date.now()}`;
-  const body = await req.json().catch(() => ({}));
-  const { scenario, job_id, source = 'api' } = body;
+  // WP-2: Auth FIRST — before reading body or querying DB
+  const auth = authorizeInternalRequest(req, 'jobs:heal');
+  if (!auth.ok) return new Response(JSON.stringify({ ok: false, state: auth.state, error: auth.error }), { status: auth.http_status });
 
-  const healed: HealAction[] = [];
+  const body = await req.json().catch(() => ({}));
+  const runId = `AH-${Date.now()}`;
+  const healed: HealResult[] = [];
   const failed: string[] = [];
 
-  // SCENARIO 1: Expired job leases (always run)
-  const expiredJobs = await sbOp(
+  // Scenario 1: Expired leases
+  const expired = await sbOp<Array<{ id: string; job_id: string; lease_owner: string; attempt_count: number; max_attempts: number }>>(
     `factory_jobs?status=eq.leased&lease_expires_at=lt.${new Date().toISOString()}&limit=10&job_type=neq.heartbeat-lock`
   );
-  if (expiredJobs.ok && Array.isArray(expiredJobs.data) && expiredJobs.data.length > 0) {
-    for (const job of expiredJobs.data) {
-      const before = { job_id: job.job_id, status: 'leased', lease_owner: job.lease_owner };
+  if (expired.ok && Array.isArray(expired.data)) {
+    for (const job of expired.data) {
+      const before = { status: 'leased', lease_owner: job.lease_owner };
       const newStatus = (job.attempt_count + 1) >= job.max_attempts ? 'failed' : 'queued';
-      const upd = await sbOp(`factory_jobs?id=eq.${job.id}`, 'PATCH', {
-        status: newStatus, lease_owner: null, lease_expires_at: null, heartbeat_at: null,
-        last_error: 'lease_expired_recovered_by_auto_heal',
+      await sbOp(`factory_jobs?id=eq.${job.id}`, 'PATCH', { status: newStatus, lease_owner: null, lease_expires_at: null, last_error: 'lease_expired_auto_healed' });
+      // WP-5: Prove via separate read
+      const verify = await sbOp<Array<{ status: string; lease_owner: string | null }>>(`factory_jobs?id=eq.${job.id}&select=status,lease_owner`);
+      const after = Array.isArray(verify.data) && verify.data[0] ? verify.data[0] : {};
+      const verified = after.status === newStatus && after.lease_owner === null;
+      const rcp = await sbOp<Array<{ receipt_id: string }>>('factory_receipts', 'POST', {
+        receipt_type: 'auto-heal', status: verified ? 'success' : 'failure', produced_by: 'auto-heal-engine',
+        action_summary: `Healed expired lease: ${job.job_id} → ${newStatus}`,
+        evidence: { run_id: runId, job_id: job.job_id, before, after, verified, compensation: `PATCH factory_jobs SET status='leased',lease_owner='${job.lease_owner}' WHERE job_id='${job.job_id}'` },
+        rollback_available: true, rollback_ref: `Restore job ${job.job_id} to leased if active worker returns`,
       });
-      if (upd.ok) {
-        const action: HealAction = {
-          trigger: 'expired_lease', diagnosis: `Job ${job.job_id} lease expired, was owned by ${job.lease_owner}`,
-          action: `Reset to ${newStatus}`, safety_justification: 'Idempotent — job was not actively running',
-          before_state: before, after_state: { status: newStatus }, verification: 'Job now re-claimable',
-          rollback_target: `Set job ${job.job_id} back to leased if needed`,
-        };
-        healed.push(action);
-        await writeHealReceipt(runId, action, true);
-      } else {
-        failed.push(`lease_recovery:${job.job_id}`);
-      }
+      healed.push({ trigger: 'expired_lease', job_id: job.job_id, before, after: after as Record<string,unknown>, receipt_id: Array.isArray(rcp.data) ? rcp.data[0]?.receipt_id : null, verified });
     }
   }
 
-  // SCENARIO 2: Stalled agent heartbeats (agent hasn't updated heartbeat_at in >5min)
-  const stalled = await sbOp(
-    `factory_jobs?status=eq.running&heartbeat_at=lt.${new Date(Date.now() - 5 * 60 * 1000).toISOString()}&limit=5`
-  );
-  if (stalled.ok && Array.isArray(stalled.data) && stalled.data.length > 0) {
-    for (const job of stalled.data) {
-      const before = { job_id: job.job_id, status: 'running', last_heartbeat: job.heartbeat_at };
-      const upd = await sbOp(`factory_jobs?id=eq.${job.id}`, 'PATCH', {
-        status: 'queued', lease_owner: null, last_error: 'stalled_agent_no_heartbeat_recovered',
-      });
-      if (upd.ok) {
-        const action: HealAction = {
-          trigger: 'stalled_agent', diagnosis: `Agent stalled on job ${job.job_id} (no heartbeat since ${job.heartbeat_at})`,
-          action: 'Requeued job for re-claim', safety_justification: 'No output was committed — safe to retry',
-          before_state: before, after_state: { status: 'queued' }, verification: 'Job re-claimable',
-          rollback_target: 'Original lease owner can re-claim',
-        };
-        healed.push(action);
-        await writeHealReceipt(runId, action, true);
-      }
-    }
-  }
-
-  // SCENARIO 3: Failed jobs within retry budget — requeue
-  const retryable = await sbOp(
-    `factory_jobs?status=eq.failed&select=id,job_id,attempt_count,max_attempts,job_type,queue_name&limit=5`
-  );
+  // Scenario 2: Retryable failed jobs
+  const retryable = await sbOp<Array<{ id: string; job_id: string; attempt_count: number; max_attempts: number }>>(`factory_jobs?status=eq.failed&limit=5`);
   if (retryable.ok && Array.isArray(retryable.data)) {
     for (const job of retryable.data) {
       if (job.attempt_count < job.max_attempts) {
-        const upd = await sbOp(`factory_jobs?id=eq.${job.id}`, 'PATCH', { status: 'queued', last_error: null });
-        if (upd.ok) {
-          const action: HealAction = {
-            trigger: 'retryable_failure', diagnosis: `Job ${job.job_id} failed (attempt ${job.attempt_count}/${job.max_attempts})`,
-            action: 'Requeued for retry', safety_justification: `${job.max_attempts - job.attempt_count} attempts remaining`,
-            before_state: { status: 'failed', attempts: job.attempt_count },
-            after_state: { status: 'queued' }, verification: 'Will be re-claimed next heartbeat',
-            rollback_target: 'Mark failed again if unsafe',
-          };
-          healed.push(action);
-          await writeHealReceipt(runId, action, true);
-        }
+        const before = { status: 'failed', attempt_count: job.attempt_count };
+        await sbOp(`factory_jobs?id=eq.${job.id}`, 'PATCH', { status: 'queued', last_error: null });
+        const verify = await sbOp<Array<{ status: string }>>(`factory_jobs?id=eq.${job.id}&select=status`);
+        const after = Array.isArray(verify.data) && verify.data[0] ? verify.data[0] : {};
+        const verified = after.status === 'queued';
+        const rcp = await sbOp<Array<{ receipt_id: string }>>('factory_receipts', 'POST', { receipt_type: 'auto-heal', status: verified ? 'success' : 'failure', produced_by: 'auto-heal-engine', action_summary: `Requeued retryable job: ${job.job_id}`, evidence: { run_id: runId, job_id: job.job_id, before, after, verified }, rollback_available: true, rollback_ref: `PATCH factory_jobs SET status='failed' WHERE job_id='${job.job_id}'` });
+        healed.push({ trigger: 'retryable_failure', job_id: job.job_id, before, after: after as Record<string,unknown>, receipt_id: Array.isArray(rcp.data) ? rcp.data[0]?.receipt_id : null, verified });
       }
     }
   }
 
-  // Write heal run record
-  await sbOp('auto_heal_runs', 'POST', {
-    job_id: job_id || null, iteration: 1,
-    diagnosis: `Auto-heal scan: ${healed.length} recovered, ${failed.length} failed`,
-    status: failed.length === 0 ? 'resolved' : 'blocked',
-    actions_taken: healed.map(h => h.action),
-    evidence: { run_id: runId, healed, failed, source },
-  });
+  // Write run record
+  await sbOp('auto_heal_runs', 'POST', { job_id: body.job_id || null, iteration: 1, diagnosis: `Scan: ${healed.length} healed, ${failed.length} failed`, status: failed.length === 0 ? 'resolved' : 'blocked', actions_taken: healed.map(h => `${h.trigger}:${h.job_id}`), evidence: { run_id: runId, healed: healed.length, failed: failed.length, all_verified: healed.every(h => h.verified) } });
 
-  return NextResponse.json({
-    ok: true, run_id: runId, healed_count: healed.length, failed_count: failed.length,
-    healed: healed.map(h => ({ trigger: h.trigger, action: h.action, verification: h.verification })),
-    failed,
-  });
+  return NextResponse.json({ ok: true, run_id: runId, healed_count: healed.length, failed_count: failed.length, all_verified: healed.every(h => h.verified), healed, request_id: auth.request_id });
 }
 
-export async function GET() {
-  return NextResponse.json({ status: 'WP-10 Auto-Heal Engine', methods: ['POST'] });
+export async function GET(req: NextRequest) {
+  const auth = authorizeInternalRequest(req, 'jobs:heal');
+  if (!auth.ok) return new Response(JSON.stringify({ ok: false, state: auth.state }), { status: auth.http_status });
+  const recent = await sbOp('auto_heal_runs?order=created_at.desc&limit=5&select=id,status,diagnosis,created_at');
+  return NextResponse.json({ engine: 'WP-10 Auto-Heal', recent: recent.data, request_id: auth.request_id });
 }
 

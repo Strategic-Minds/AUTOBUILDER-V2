@@ -1,53 +1,112 @@
-name: Playwright E2E Tests
+name: Playwright E2E — Preview Only
 
 on:
   push:
-    branches: [main, autonomy-test]
+    branches: [autonomy-test]
   pull_request:
-    branches: [main]
+    branches: [main, autonomy-test]
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: 'Preview URL to test (required)'
+        required: true
+        type: string
+
+# WP-4: Minimal permissions
+permissions:
+  contents: read
+
+# WP-4: Cancel in-progress runs on new push
+concurrency:
+  group: playwright-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   playwright:
-    timeout-minutes: 30
+    name: Chromium E2E Tests
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     env:
-      PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL || 'https://www.autobuilderos.com' }}
-      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      # WP-3: Must be supplied — no production fallback
+      PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url || vars.PLAYWRIGHT_PREVIEW_URL }}
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-node@v4
+      # WP-4: Pinned immutable commit SHAs
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # v4.1.0
         with:
-          node-version: 20
-          cache: npm
-          
+          node-version: '20'
+          cache: 'npm'
+
       - name: Install dependencies
         run: npm ci
-        
-      - name: Install Playwright Chromium
+
+      - name: Install Playwright Chromium (no OpenAI key required)
         run: npx playwright install --with-deps chromium
-        
-      - name: Run Playwright tests
-        run: npx playwright test --project=chromium-headless
-        
-      - name: Upload test results
+
+      - name: Verify PLAYWRIGHT_BASE_URL is not production
+        run: |
+          if echo "$PLAYWRIGHT_BASE_URL" | grep -q 'autobuilderos.com'; then
+            echo 'ERROR: Production URL detected. Use a preview URL.'
+            exit 1
+          fi
+          echo "Target: $PLAYWRIGHT_BASE_URL"
+
+      - name: Run Playwright headless tests
+        run: npx playwright test --project=chromium
+        env:
+          # WP-4: CRON_SECRET scoped to only steps that need it
+          CRON_SECRET: ${{ secrets.PLAYWRIGHT_TEST_SECRET }}
+
+      - name: Upload HTML report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
         with:
-          name: playwright-results-${{ github.sha }}
+          name: playwright-html-${{ github.sha }}
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload JSON results
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: playwright-json-${{ github.sha }}
+          path: playwright-results.json
+          retention-days: 14
+
+      - name: Upload JUnit results
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: playwright-junit-${{ github.sha }}
+          path: playwright-junit.xml
+          retention-days: 14
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: playwright-screenshots-${{ github.sha }}
+          path: screenshots/
+          retention-days: 7
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: playwright-traces-${{ github.sha }}
+          path: test-results/
+          retention-days: 7
+
+      - name: Publish test summary
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: playwright-all-${{ github.sha }}
           path: |
             playwright-report/
             playwright-results.json
             playwright-junit.xml
-            screenshots/
-          retention-days: 7
-          
-      - name: Upload failure artifacts
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-failures-${{ github.sha }}
-          path: |
-            test-results/
-          retention-days: 7
+          retention-days: 14
 
