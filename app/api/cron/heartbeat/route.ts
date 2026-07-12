@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { requireCronSecret } from '@/lib/api-auth'
 import { dbUpdateCronJob, dbCreateReceipt, dbGetProjects } from '@/lib/supabase/db'
 
@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 // Called by Vercel Cron every 5 minutes
 // vercel.json: { "crons": [{ "path": "/api/cron/heartbeat", "schedule": "*/5 * * * *" }] }
-export async function GET() {
+export async function GET(req: NextRequest) {
   const start = Date.now()
   try { requireCronSecret(req)
     const projects = await dbGetProjects()
