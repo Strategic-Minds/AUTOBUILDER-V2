@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { authorizeInternalRequest } from '@/lib/internal-auth';
+import { claimNextAutonomyJob, completeAutonomyJob, failAutonomyJob } from '@/lib/autonomy/store';
+import { routeAutonomyTask } from '@/lib/autonomy/ai-gateway-router';
+import type { AutonomyTask } from '@/lib/autonomy/types';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
+export async function POST(req: NextRequest) {
+  const auth = authorizeInternalRequest(req, 'agents:dispatch');
+  if (!auth.ok) return NextResponse.json({ ok: false, state: auth.state, error: auth.error }, { status: auth.http_status });
+  const body = await req.json().catch(() => ({}));
+  const workerId = String(body.worker_id || `worker-${crypto.randomUUID()}`);
+  const job = await claimNextAutonomyJob(workerId);
+  if (!job) return NextResponse.json({ ok: true, state: 'IDLE', worker_id: workerId });
+  const task = job.input_payload as unknown as AutonomyTask;
+  try {
+    const result = await routeAutonomyTask(task);
+    if (result.ok) {
+      await completeAutonomyJob(job, result);
+      return NextResponse.json({ ok: true, state: 'COMPLETED', job_id: job.job_id || job.id, provider: result.provider, result });
+    }
+    const requeue = Number(job.attempt_count || 0) + 1 < Number(job.max_attempts || 3);
+    await failAutonomyJob(job, result.error || 'Provider execution failed', requeue);
+    return NextResponse.json({ ok: false, state: requeue ? 'REQUEUED' : 'FAILED', job_id: job.job_id || job.id, result }, { status: requeue ? 202 : 502 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await failAutonomyJob(job, message, true);
+    return NextResponse.json({ ok: false, state: 'REQUEUED', job_id: job.job_id || job.id, error: message }, { status: 500 });
+  }
+}
