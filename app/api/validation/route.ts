@@ -1,29 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeInternalRequest } from '@/lib/internal-auth';
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const authCtx = authorizeInternalRequest(req, 'receipts:write');
-  if (!authCtx.ok) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  
-  return NextResponse.json({
-    validation_system: 'active',
-    last_run: new Date().toISOString(),
-    status: 'CI_REQUIRED',
-  });
+  const auth = authorizeInternalRequest(req);
+  if (!auth.ok) return new Response(JSON.stringify({ok:false}), {status: auth.http_status});
+  return NextResponse.json({status: 'active', timestamp: new Date().toISOString()});
 }
 
 export async function POST(req: NextRequest) {
-  const authCtx = authorizeInternalRequest(req, 'receipts:write');
-  if (!authCtx.ok) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  
-  const body = await req.json();
-  return NextResponse.json({
-    received: true,
-    validation_id: `VAL-${Date.now()}`,
-    ...body,
-  });
+  const auth = authorizeInternalRequest(req);
+  if (!auth.ok) return new Response(JSON.stringify({ok:false}), {status: auth.http_status});
+  return NextResponse.json({received: true, timestamp: new Date().toISOString()});
 }
