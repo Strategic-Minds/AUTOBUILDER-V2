@@ -1,0 +1,11 @@
+{
+  "trigger_time": "2026-07-12T20:02:23.590637",
+  "reason": "Master Loop QA-001 fix: force redeploy for 404 route fixes",
+  "routes_fixed": [
+    "gpt-bridge",
+    "chatroom/send",
+    "tasks",
+    "mcp-minimal/mcp"
+  ],
+  "expected_after": "gpt-bridge POST/GET, chatroom/send POST, tasks GET/POST all 200/405"
+}
