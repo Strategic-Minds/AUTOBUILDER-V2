@@ -1,51 +1,25 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { AlertTriangle } from 'lucide-react'
+import Link from "next/link";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 
 export default function AuthErrorPage() {
-  const router = useRouter()
-
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: '#080808' }}
-    >
-      <div
-        className="rounded-2xl p-10 flex flex-col items-center gap-6 max-w-sm w-full text-center"
-        style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}
-        >
-          <AlertTriangle size={26} style={{ color: '#ef4444' }} />
+    <div className="min-h-screen bg-[#08080a] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm text-center">
+        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-500/15 border border-red-500/25 mx-auto mb-4">
+          <AlertTriangle className="w-6 h-6 text-red-400" />
         </div>
-
-        <div>
-          <p
-            className="text-[10px] font-bold uppercase tracking-widest mb-1"
-            style={{ color: 'rgba(255,255,255,0.90)' }}
-          >
-            XPS Intelligence
-          </p>
-          <h1 className="text-xl font-bold text-white mb-2">Authentication Error</h1>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            The sign-in link has expired or is invalid. Please try again.
-          </p>
-        </div>
-
-        <button
-          onClick={() => router.push('/')}
-          className="w-full py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-opacity hover:opacity-80"
-          style={{ background: 'rgba(255,255,255,0.90)', color: '#080808' }}
+        <h2 className="text-[18px] font-bold text-[#f2f2f4] mb-2">Authentication Error</h2>
+        <p className="text-[13px] text-[#6b6b7a] mb-6">
+          Something went wrong during authentication. The link may have expired or already been used.
+        </p>
+        <Link
+          href="/auth/login"
+          className="inline-flex items-center gap-2 text-[13px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
         >
-          Back to Sign In
-        </button>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to sign in
+        </Link>
       </div>
     </div>
-  )
+  );
 }
