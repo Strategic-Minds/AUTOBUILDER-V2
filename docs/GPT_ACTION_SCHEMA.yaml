@@ -1,0 +1,52 @@
+openapi: 3.1.0
+info:
+  title: Strategic Minds Superagent Bridge
+  description: Two-way bridge between GPT and Base44 Superagent
+  version: 1.0.0
+servers:
+  - url: https://autobuilder-v2.vercel.app
+    description: Production bridge
+paths:
+  /api/gpt-bridge:
+    get:
+      operationId: getBridgeStatus
+      summary: Check if bridge is live
+      responses:
+        '200':
+          description: Bridge status
+    post:
+      operationId: askSuperagent
+      summary: Send a message to the Base44 Superagent and get a reply
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  description: The message or question to send to the Superagent
+                thread_id:
+                  type: string
+                  description: Optional thread ID to maintain conversation continuity
+                context:
+                  type: object
+                  description: Optional context payload
+      responses:
+        '200':
+          description: Superagent reply
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  reply:
+                    type: string
+                  thread_id:
+                    type: string
+                  timestamp:
+                    type: string
