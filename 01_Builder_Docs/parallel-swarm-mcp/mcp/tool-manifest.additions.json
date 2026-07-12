@@ -1,0 +1,47 @@
+{
+  "schema_version": "parallel-swarm-mcp-1.0.0",
+  "canonical_mcp_url": "https://auto-builder-strategic-minds-advisory.vercel.app/api/mcp",
+  "additive_tools": [
+    {
+      "name": "run_swarm",
+      "description": "Create or resume a persistent recursive parallel swarm run.",
+      "input_schema_ref": "../schemas/run_swarm.input.schema.json"
+    },
+    {
+      "name": "get_swarm_status",
+      "description": "Return run, agent tree, packet, artifact, and result status."
+    },
+    {
+      "name": "message_swarm",
+      "description": "Send a persisted follow-up message to the root or a selected agent path."
+    },
+    {
+      "name": "cancel_swarm",
+      "description": "Cancel a swarm run or selected task packets."
+    },
+    {
+      "name": "resume_swarm",
+      "description": "Resume a recoverable swarm run from persisted state."
+    },
+    {
+      "name": "list_swarm_agents",
+      "description": "Return the recursive agent tree and current states."
+    },
+    {
+      "name": "sync_github_inventory",
+      "description": "Synchronize all connected GitHub installations and repositories."
+    },
+    {
+      "name": "sync_vercel_inventory",
+      "description": "Synchronize Vercel teams and projects."
+    }
+  ],
+  "existing_tools_integrated": [
+    "create_github_repo",
+    "create_vercel_project",
+    "create_vercel_workflow",
+    "create_vercel_agent",
+    "create_ai_gateway",
+    "rollback"
+  ]
+}
