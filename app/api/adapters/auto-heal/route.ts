@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       const newStatus = (job.attempt_count + 1) >= job.max_attempts ? 'failed' : 'queued';
       await sbOp(`factory_jobs?id=eq.${job.id}`, 'PATCH', { status: newStatus, lease_owner: null, lease_expires_at: null, last_error: 'lease_expired_auto_healed' });
       const verify = await sbOp<StatusRow[]>(`factory_jobs?id=eq.${job.id}&select=status,lease_owner`);
-      const afterRow: StatusRow = Array.isArray(verify.data) && verify.data[0] ? verify.data[0] : { status: '', lease_owner: undefined };
+      const afterRow: StatusRow = Array.isArray(verify.data) && verify.data[0] ? verify.data[0] : { status: '', lease_owner: null } as StatusRow;
       const after: Record<string,unknown> = afterRow;
       const verified = afterRow.status === newStatus && afterRow.lease_owner === null;
       const rcp = await sbOp<Array<{ receipt_id: string }>>('factory_receipts', 'POST', {
