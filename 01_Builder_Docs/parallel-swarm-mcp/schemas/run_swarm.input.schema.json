@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://strategic-minds.local/schemas/run_swarm.input.schema.json",
+  "title": "AUTO BUILDER V2 run_swarm input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["job_id", "mission", "project_key", "mode"],
+  "properties": {
+    "job_id": {"type": "string", "minLength": 1},
+    "idea_id": {"type": ["string", "null"]},
+    "mission": {"type": "string", "minLength": 1},
+    "project_key": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["plan", "dry_run", "execute"]},
+    "max_concurrency": {"type": "integer", "minimum": 1, "maximum": 64, "default": 8},
+    "max_agent_depth": {"type": "integer", "minimum": 1, "maximum": 12, "default": 4},
+    "specialist_policy": {"enum": ["registry_only", "dynamic_only", "dynamic_plus_registry"], "default": "dynamic_plus_registry"},
+    "github_scope": {
+      "type": "object",
+      "properties": {
+        "installation_ids": {"type": "array", "items": {"type": "integer"}},
+        "repository_allowlist": {"type": "array", "items": {"type": "string"}},
+        "include_all_accessible": {"type": "boolean", "default": true}
+      },
+      "additionalProperties": false
+    },
+    "vercel_scope": {
+      "type": "object",
+      "properties": {
+        "team_id": {"type": "string"},
+        "project_allowlist": {"type": "array", "items": {"type": "string"}},
+        "include_all_accessible": {"type": "boolean", "default": true}
+      },
+      "additionalProperties": false
+    },
+    "shared_context": {"type": "object"},
+    "acceptance_criteria": {"type": "array", "items": {"type": "string"}},
+    "requested_outputs": {"type": "array", "items": {"type": "string"}}
+  }
+}
