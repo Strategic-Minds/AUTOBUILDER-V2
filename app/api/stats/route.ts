@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { dbGetDashboardStats } from '@/lib/supabase/db'
+import { requireAuth } from '@/lib/api-auth'
 
 export const dynamic = 'force-dynamic'
 
