@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { requireCronSecret } from '@/lib/api-auth'
 import { dbGetDashboardStats, dbGetProjects, dbUpdateCronJob, dbCreateSlackNotification } from '@/lib/supabase/db'
 
 export const dynamic = 'force-dynamic'
 
 // Called by Vercel Cron at 08:00 daily
-export async function GET() {
+export async function GET(req: NextRequest) {
   const start = Date.now()
   try { requireCronSecret(req)
     const [stats, projects] = await Promise.all([
