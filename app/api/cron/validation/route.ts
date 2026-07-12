@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { requireCronSecret } from '@/lib/api-auth'
 import { dbGetProjects, dbCreateValidationCheck, dbUpdateCronJob, dbUpdateProject } from '@/lib/supabase/db'
 
 export const dynamic = 'force-dynamic'
 
 // Runs every 4 hours — sweeps all active projects for readiness issues
-export async function GET() {
+export async function GET(req: NextRequest) {
   const start = Date.now()
   try { requireCronSecret(req)
     const projects = await dbGetProjects()
