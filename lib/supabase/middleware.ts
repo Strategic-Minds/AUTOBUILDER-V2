@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Paths that never require authentication
 const PUBLIC_PATHS = new Set(['/', '/auth/error'])
-const PUBLIC_PREFIXES = ['/auth/', '/_next/', '/favicon', '/api/cron/']
+const PUBLIC_PREFIXES = ['/auth/', '/_next/', '/favicon', '/api/cron/', '/api/gpt-bridge', '/api/base44-agent']
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
