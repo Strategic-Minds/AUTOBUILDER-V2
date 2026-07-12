@@ -1,12 +1,36 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test';
+
+/**
+ * Part 9: Real Playwright config
+ * Headless by default for CI. Headful when PW_HEADED=1.
+ * Does NOT require OpenAI key.
+ */
 export default defineConfig({
-  testDir: './tests',
-  testMatch: /.*\.spec\.ts/,
-  retries: 1,
-  reporter: [['html'], ['json', { outputFile: 'playwright-report/results.json' }]],
-  use: { baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
+  testDir: './e2e',
+  timeout: 30_000,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['json', { outputFile: 'playwright-results.json' }],
+    ['junit', { outputFile: 'playwright-junit.xml' }],
+  ],
+  use: {
+    headless: process.env.PW_HEADED !== '1',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://www.autobuilderos.com',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    trace: 'retain-on-failure',
+  },
   projects: [
-    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1100 } } },
-    { name: 'chromium-mobile', use: { ...devices['Pixel 5'] } }
-  ]
-})
+    {
+      name: 'chromium-headless',
+      use: { ...devices['Desktop Chrome'], headless: true },
+    },
+    {
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+  ],
+});
+
