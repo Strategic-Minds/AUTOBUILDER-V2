@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shared context snapshot",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["context_snapshot_id", "run_id", "created_at", "mission", "source_truth"],
+  "properties": {
+    "context_snapshot_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "mission": {"type": "string"},
+    "source_truth": {"type": "array", "items": {"type": "object"}},
+    "github_inventory_snapshot_id": {"type": ["string", "null"]},
+    "vercel_inventory_snapshot_id": {"type": ["string", "null"]},
+    "requirements": {"type": "array", "items": {"type": "object"}},
+    "architecture_decisions": {"type": "array", "items": {"type": "object"}},
+    "connector_capabilities": {"type": "array", "items": {"type": "object"}},
+    "environment_variable_names": {"type": "array", "items": {"type": "string"}},
+    "artifact_refs": {"type": "array", "items": {"type": "object"}},
+    "receipt_refs": {"type": "array", "items": {"type": "object"}}
+  }
+}
