@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authorizeInternalRequest } from '@/lib/internal-auth'
+import { authorizeInternalRequest, makeUnauthorizedResponse } from '@/lib/internal-auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
-  const authError = authorizeInternalRequest(req)
-  if (authError) return authError
+  const authCtx = authorizeInternalRequest(req, 'agents:dispatch')
+  if (!authCtx.ok) return makeUnauthorizedResponse(authCtx)
 
   try {
     const body = await req.json()
@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const authError = authorizeInternalRequest(req)
-  if (authError) return authError
+  const authCtx = authorizeInternalRequest(req, 'agents:dispatch')
+  if (!authCtx.ok) return makeUnauthorizedResponse(authCtx)
 
   return NextResponse.json({
     ok: true,
