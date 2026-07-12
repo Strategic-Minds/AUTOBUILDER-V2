@@ -7,10 +7,15 @@ import { Eye, EyeOff, Lock, Shield } from 'lucide-react'
 
 type AuthMode = 'login' | 'signup'
 
-const GOLD  = '#C99000'
-const INK   = '#0B0B0B'
-const SURF  = '#F7F7F6'
-const MUTED = '#6B7280'
+const GOLD = '#C99000'
+const EDGE = 'rgba(255,255,255,0.08)'
+const BLUE = '#3B82F6'
+
+const STATS = [
+  { value: '9',    label: 'Active Modules' },
+  { value: '100%', label: 'Automated Pipeline' },
+  { value: '2wk',  label: 'Avg Site Launch' },
+]
 
 export default function LoginPage() {
   const router = useRouter()
@@ -49,33 +54,34 @@ export default function LoginPage() {
   }
 
   const inputBorder = (name: string) =>
-    `1px solid ${focused === name ? GOLD : '#D1D5DB'}`
+    focused === name ? `1px solid rgba(59,130,246,0.55)` : `1px solid rgba(255,255,255,0.15)`
 
   return (
     <>
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; background: #FFFFFF; }
+        body { margin: 0; background: #080808; }
 
         .login-root {
           min-height: 100vh;
-          background: #FFFFFF;
+          background: #080808;
           display: flex;
           flex-direction: column;
         }
 
-        /* ── TOP BAR ── */
+        /* TOP BAR */
         .topbar {
           position: fixed;
           top: 0; left: 0; right: 0;
           z-index: 50;
-          height: 56px;
-          background: #FFFFFF;
-          border-bottom: 1px solid #E5E7EB;
+          height: 52px;
+          background: rgba(8,8,8,0.95);
+          border-bottom: 1px solid ${EDGE};
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 24px;
+          padding: 0 32px;
+          backdrop-filter: blur(12px);
         }
         .topbar-brand {
           display: flex;
@@ -83,117 +89,126 @@ export default function LoginPage() {
           gap: 10px;
         }
         .topbar-logo {
-          width: 32px; height: 32px;
-          background: ${INK};
-          border-radius: 8px;
+          width: 28px; height: 28px;
+          background: #1A1A1A;
+          border: 1px solid ${EDGE};
+          border-radius: 7px;
           display: flex; align-items: center; justify-content: center;
-          font-size: 13px; font-weight: 900; color: ${GOLD};
+          font-size: 10px; font-weight: 900;
+          color: ${GOLD};
           letter-spacing: -0.02em;
           flex-shrink: 0;
         }
         .topbar-name {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 800;
-          color: ${INK};
-          letter-spacing: 0.08em;
+          color: #fff;
+          letter-spacing: 0.10em;
         }
         .topbar-sub {
-          font-size: 10px;
-          color: ${MUTED};
-          letter-spacing: 0.12em;
+          font-size: 11px;
+          color: rgba(255,255,255,0.18);
           font-family: monospace;
+          letter-spacing: 0.12em;
         }
         .topbar-status {
           display: flex;
           align-items: center;
           gap: 6px;
-          background: #F0FDF4;
-          border: 1px solid #BBF7D0;
-          border-radius: 20px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid ${EDGE};
+          border-radius: 6px;
           padding: 4px 12px;
         }
         .topbar-dot {
-          width: 6px; height: 6px;
+          width: 5px; height: 5px;
           border-radius: 50%;
-          background: #16A34A;
+          background: #4ade80;
         }
         .topbar-status-text {
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 600;
-          color: #15803D;
-          letter-spacing: 0.10em;
+          color: rgba(255,255,255,0.28);
+          letter-spacing: 0.14em;
           font-family: monospace;
         }
 
-        /* ── LAYOUT ── */
+        /* PAGE LAYOUT */
         .page-body {
           flex: 1;
-          padding-top: 56px;
+          padding-top: 52px;
           display: grid;
           grid-template-columns: 1fr 1fr;
           min-height: 100vh;
         }
 
-        /* ── LEFT PANEL ── */
+        /* LEFT PANEL — dark brand */
         .left-panel {
-          background: ${INK};
+          background: #080808;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: flex-start;
           padding: 60px 56px;
           gap: 40px;
+          border-right: 1px solid ${EDGE};
         }
         .left-eyebrow {
           font-size: 10px;
           font-weight: 700;
           letter-spacing: 0.26em;
-          color: ${GOLD};
+          color: rgba(59,130,246,0.80);
           font-family: monospace;
           text-transform: uppercase;
         }
         .left-headline {
           font-size: clamp(28px, 3vw, 44px);
           font-weight: 900;
-          color: #FFFFFF;
+          color: #fff;
           line-height: 1.12;
           letter-spacing: -0.03em;
           margin: 0;
         }
-        .left-headline span {
-          color: ${GOLD};
-        }
+        .left-headline span { color: ${GOLD}; }
         .left-body {
           font-size: 15px;
-          color: rgba(255,255,255,0.52);
+          color: rgba(255,255,255,0.38);
           line-height: 1.7;
           max-width: 400px;
           margin: 0;
         }
         .stats-row {
           display: flex;
-          gap: 24px;
-          flex-wrap: wrap;
+          gap: 0;
+          border: 1px solid ${EDGE};
+          border-radius: 12px;
+          overflow: hidden;
+          width: 100%;
+          max-width: 400px;
         }
         .stat-item {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
+          flex: 1;
+          padding: 20px 0;
+          text-align: center;
+          background: rgba(255,255,255,0.02);
         }
+        .stat-item + .stat-item { border-left: 1px solid ${EDGE}; }
         .stat-value {
-          font-size: 28px;
+          font-size: 24px;
           font-weight: 900;
-          color: #FFFFFF;
+          color: #fff;
           font-family: monospace;
-          line-height: 1;
+          display: block;
+          margin-bottom: 5px;
         }
         .stat-label {
           font-size: 9px;
           font-weight: 700;
-          color: rgba(255,255,255,0.32);
-          letter-spacing: 0.18em;
+          color: rgba(255,255,255,0.28);
+          letter-spacing: 0.16em;
           text-transform: uppercase;
           font-family: monospace;
+          display: block;
         }
         .trust-pills {
           display: flex;
@@ -201,44 +216,48 @@ export default function LoginPage() {
           gap: 8px;
         }
         .trust-pill {
-          padding: 6px 14px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.10);
+          padding: 5px 12px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid ${EDGE};
           border-radius: 20px;
           font-size: 11px;
           font-weight: 600;
-          color: rgba(255,255,255,0.55);
+          color: rgba(255,255,255,0.40);
           letter-spacing: 0.06em;
         }
 
-        /* ── RIGHT PANEL ── */
+        /* RIGHT PANEL — slightly lighter dark for contrast */
         .right-panel {
-          background: ${SURF};
+          background: #0F0F0F;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
           padding: 60px 40px;
         }
+
+        /* AUTH CARD — noticeably lighter than the page */
         .auth-card {
           width: 100%;
           max-width: 420px;
-          background: #FFFFFF;
-          border: 1px solid #E5E7EB;
+          background: #1C1C1C;
+          border: 1px solid rgba(255,255,255,0.12);
           border-radius: 20px;
           padding: 40px 36px 36px;
-          box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+          box-shadow:
+            0 0 0 1px rgba(255,255,255,0.04) inset,
+            0 24px 64px rgba(0,0,0,0.5);
         }
         .card-title {
           font-size: 22px;
           font-weight: 900;
-          color: ${INK};
+          color: #fff;
           margin: 0 0 4px;
           letter-spacing: -0.02em;
         }
         .card-sub {
           font-size: 13px;
-          color: ${MUTED};
+          color: rgba(255,255,255,0.38);
           margin: 0 0 28px;
         }
 
@@ -246,8 +265,8 @@ export default function LoginPage() {
         .tabs {
           display: flex;
           gap: 3px;
-          background: ${SURF};
-          border: 1px solid #E5E7EB;
+          background: #111111;
+          border: 1px solid rgba(255,255,255,0.08);
           border-radius: 10px;
           padding: 3px;
           margin-bottom: 28px;
@@ -264,24 +283,17 @@ export default function LoginPage() {
           transition: all 0.15s;
           border: 1px solid transparent;
         }
-        .tab-btn-active {
-          background: #FFFFFF;
-          color: ${INK};
-          border-color: #E5E7EB;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        .tab-active {
+          background: #2A2A2A;
+          color: #fff;
+          border-color: rgba(255,255,255,0.10);
         }
-        .tab-btn-inactive {
+        .tab-inactive {
           background: transparent;
-          color: ${MUTED};
+          color: rgba(255,255,255,0.28);
         }
 
-        /* Fields */
-        .field-group {
-          display: flex;
-          flex-direction: column;
-          gap: 18px;
-          margin-bottom: 24px;
-        }
+        /* Labels */
         .field-label {
           display: block;
           font-size: 10px;
@@ -289,38 +301,35 @@ export default function LoginPage() {
           letter-spacing: 0.16em;
           text-transform: uppercase;
           margin-bottom: 8px;
-          color: ${INK};
+          color: rgba(255,255,255,0.55);
         }
-        .field-wrap {
-          position: relative;
-        }
+
+        /* Inputs */
+        .field-wrap { position: relative; }
         .field-icon {
           position: absolute;
-          left: 14px;
+          left: 15px;
           top: 50%;
           transform: translateY(-50%);
           pointer-events: none;
-          color: ${MUTED};
+          color: rgba(255,255,255,0.22);
           display: flex;
+          transition: color 0.15s;
         }
-        .field-icon-active {
-          color: ${GOLD};
-        }
+        .field-icon-focused { color: ${BLUE}; }
         .field-input {
           width: 100%;
           padding: 13px 16px 13px 42px;
-          background: #FFFFFF;
+          background: #111111;
           border-radius: 10px;
-          color: ${INK};
+          color: #fff;
           font-size: 14px;
           outline: none;
           transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .field-input::placeholder {
-          color: #9CA3AF;
-        }
+        .field-input::placeholder { color: rgba(255,255,255,0.22); }
         .field-input:focus {
-          box-shadow: 0 0 0 3px rgba(201,144,0,0.12);
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.10);
         }
         .pw-toggle {
           position: absolute;
@@ -330,18 +339,25 @@ export default function LoginPage() {
           background: none;
           border: none;
           cursor: pointer;
-          color: ${MUTED};
+          color: rgba(255,255,255,0.28);
           padding: 0;
           display: flex;
           align-items: center;
         }
 
-        /* Submit button */
+        .field-group {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+          margin-bottom: 24px;
+        }
+
+        /* Submit */
         .submit-btn {
           width: 100%;
           padding: 14px;
-          background: ${INK};
-          color: #FFFFFF;
+          background: #fff;
+          color: #080808;
           font-size: 13px;
           font-weight: 800;
           letter-spacing: 0.12em;
@@ -349,40 +365,33 @@ export default function LoginPage() {
           border: none;
           border-radius: 10px;
           cursor: pointer;
-          transition: background 0.15s, transform 0.10s;
+          transition: opacity 0.15s, transform 0.10s;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
         }
-        .submit-btn:hover:not(:disabled) {
-          background: #222222;
-        }
-        .submit-btn:active:not(:disabled) {
-          transform: scale(0.99);
-        }
-        .submit-btn:disabled {
-          opacity: 0.55;
-          cursor: not-allowed;
-        }
+        .submit-btn:hover:not(:disabled) { opacity: 0.92; }
+        .submit-btn:active:not(:disabled) { transform: scale(0.99); }
+        .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
         /* Alerts */
         .alert-error {
           padding: 12px 14px;
-          background: #FEF2F2;
-          border: 1px solid #FECACA;
+          background: rgba(220,38,38,0.10);
+          border: 1px solid rgba(220,38,38,0.25);
           border-radius: 8px;
           font-size: 13px;
-          color: #DC2626;
+          color: #FCA5A5;
           margin-bottom: 16px;
         }
         .alert-success {
           padding: 12px 14px;
-          background: #F0FDF4;
-          border: 1px solid #BBF7D0;
+          background: rgba(74,222,128,0.08);
+          border: 1px solid rgba(74,222,128,0.20);
           border-radius: 8px;
           font-size: 13px;
-          color: #16A34A;
+          color: #86EFAC;
           margin-bottom: 16px;
         }
 
@@ -391,16 +400,16 @@ export default function LoginPage() {
           margin-top: 24px;
           text-align: center;
           font-size: 11px;
-          color: ${MUTED};
-          line-height: 1.6;
+          color: rgba(255,255,255,0.28);
+          line-height: 1.7;
         }
         .card-footer a {
-          color: ${GOLD};
+          color: ${BLUE};
           font-weight: 700;
           text-decoration: none;
         }
 
-        /* ── MOBILE RESPONSIVE ── */
+        /* RESPONSIVE */
         @media (max-width: 768px) {
           .page-body {
             grid-template-columns: 1fr;
@@ -408,42 +417,25 @@ export default function LoginPage() {
           .left-panel {
             padding: 40px 24px;
             gap: 28px;
+            border-right: none;
+            border-bottom: 1px solid ${EDGE};
           }
-          .left-headline {
-            font-size: 28px;
-          }
-          .right-panel {
-            padding: 40px 20px;
-          }
-          .auth-card {
-            padding: 32px 24px 28px;
-          }
-          .topbar-sub {
-            display: none;
-          }
-          .trust-pills {
-            display: none;
-          }
+          .left-headline { font-size: 28px; }
+          .right-panel { padding: 40px 20px; }
+          .auth-card { padding: 32px 24px 28px; }
+          .topbar { padding: 0 20px; }
+          .topbar-sub { display: none; }
         }
 
         @media (max-width: 480px) {
-          .topbar {
-            padding: 0 16px;
-          }
-          .left-panel {
-            padding: 32px 20px;
-          }
-          .left-body {
-            display: none;
-          }
-          .stats-row {
-            gap: 20px;
-          }
-          .stat-value {
-            font-size: 22px;
-          }
+          .topbar { padding: 0 16px; }
+          .left-panel { padding: 28px 16px; }
+          .left-body { display: none; }
+          .trust-pills { display: none; }
+          .stats-row { max-width: 100%; }
+          .stat-value { font-size: 20px; }
           .auth-card {
-            padding: 28px 20px 24px;
+            padding: 24px 18px 22px;
             border-radius: 16px;
           }
         }
@@ -464,10 +456,10 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* PAGE BODY — two columns on desktop, stacked on mobile */}
+        {/* TWO-COLUMN LAYOUT */}
         <div className="page-body">
 
-          {/* LEFT — brand panel */}
+          {/* LEFT — dark brand panel */}
           <div className="left-panel">
             <p className="left-eyebrow">AI-Powered Build OS</p>
 
@@ -477,15 +469,11 @@ export default function LoginPage() {
             </h1>
 
             <p className="left-body">
-              One AI command center that runs your entire website delivery pipeline — from client intake to launch. Built for Xtreme Floor Systems.
+              One AI command center that runs your entire website delivery pipeline — from client intake to launch.
             </p>
 
             <div className="stats-row">
-              {[
-                { value: '9',    label: 'Active Modules' },
-                { value: '100%', label: 'Automated' },
-                { value: '2wk',  label: 'Avg Launch' },
-              ].map(s => (
+              {STATS.map(s => (
                 <div key={s.label} className="stat-item">
                   <span className="stat-value">{s.value}</span>
                   <span className="stat-label">{s.label}</span>
@@ -500,9 +488,10 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* RIGHT — auth card */}
+          {/* RIGHT — lighter panel with bright card */}
           <div className="right-panel">
             <div className="auth-card">
+
               <h2 className="card-title">
                 {mode === 'login' ? 'Welcome back' : 'Create account'}
               </h2>
@@ -518,7 +507,7 @@ export default function LoginPage() {
                   <button
                     key={m}
                     onClick={() => setMode(m)}
-                    className={`tab-btn ${mode === m ? 'tab-btn-active' : 'tab-btn-inactive'}`}
+                    className={`tab-btn ${mode === m ? 'tab-active' : 'tab-inactive'}`}
                   >
                     {m === 'login' ? 'Sign In' : 'Register'}
                   </button>
@@ -532,10 +521,11 @@ export default function LoginPage() {
               {/* Form */}
               <form onSubmit={handleSubmit}>
                 <div className="field-group">
+
                   <div>
                     <label className="field-label">Email Address</label>
                     <div className="field-wrap">
-                      <span className={`field-icon ${focused === 'email' ? 'field-icon-active' : ''}`}>
+                      <span className={`field-icon ${focused === 'email' ? 'field-icon-focused' : ''}`}>
                         <Shield size={13} />
                       </span>
                       <input
@@ -555,7 +545,7 @@ export default function LoginPage() {
                   <div>
                     <label className="field-label">Password</label>
                     <div className="field-wrap">
-                      <span className={`field-icon ${focused === 'pw' ? 'field-icon-active' : ''}`}>
+                      <span className={`field-icon ${focused === 'pw' ? 'field-icon-focused' : ''}`}>
                         <Lock size={13} />
                       </span>
                       <input
@@ -578,29 +568,31 @@ export default function LoginPage() {
                       </button>
                     </div>
                   </div>
+
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="submit-btn"
-                >
+                <button type="submit" disabled={submitting} className="submit-btn">
                   {submitting
                     ? 'Please wait…'
-                    : mode === 'login' ? '→ Sign In' : '→ Create Account'}
+                    : mode === 'login' ? '→  Sign In' : '→  Create Account'}
                 </button>
               </form>
 
               <div className="card-footer">
                 {mode === 'login'
-                  ? <>Don&apos;t have access? <a href="#" onClick={e => { e.preventDefault(); setMode('signup') }}>Request access</a></>
-                  : <>Already have an account? <a href="#" onClick={e => { e.preventDefault(); setMode('login') }}>Sign in</a></>
+                  ? <>Don&apos;t have access?{' '}
+                      <a href="#" onClick={e => { e.preventDefault(); setMode('signup') }}>Request access</a>
+                    </>
+                  : <>Already have an account?{' '}
+                      <a href="#" onClick={e => { e.preventDefault(); setMode('login') }}>Sign in</a>
+                    </>
                 }
                 <br />
-                <span style={{ color: '#9CA3AF', fontSize: 10, letterSpacing: '0.06em' }}>
+                <span style={{ color: 'rgba(255,255,255,0.18)', fontSize: 10, letterSpacing: '0.06em' }}>
                   XPS Intelligence · Xtreme Floor Systems
                 </span>
               </div>
+
             </div>
           </div>
 
