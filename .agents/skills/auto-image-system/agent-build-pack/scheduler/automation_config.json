@@ -1,0 +1,31 @@
+{
+  "system_name": "Auto Image System Agent Build Pack",
+  "timezone": "America/New_York",
+  "unified_ai_email": "ai@autobuilderos.com",
+  "jobs": [
+    {
+      "name": "Daily Prompt Builder",
+      "agent": "Prompt Builder Agent",
+      "schedule": "daily 08:30",
+      "packet": "command-packets/daily_prompt_builder.md"
+    },
+    {
+      "name": "Daily Image Queue",
+      "agent": "Image Generator Agent",
+      "schedule": "daily 12:00",
+      "packet": "command-packets/image_generator.md"
+    },
+    {
+      "name": "Daily QA Review",
+      "agent": "QA Review Agent",
+      "schedule": "daily 16:00",
+      "packet": "command-packets/qa_reviewer.md"
+    },
+    {
+      "name": "Weekly Campaign Planner",
+      "agent": "Campaign Planner Agent",
+      "schedule": "weekly Monday 10:00",
+      "packet": "command-packets/weekly_campaign_planner.md"
+    }
+  ]
+}

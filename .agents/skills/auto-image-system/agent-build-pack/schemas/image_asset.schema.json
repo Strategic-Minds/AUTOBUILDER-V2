@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Auto Image Asset",
+  "type": "object",
+  "required": ["asset_id", "brand", "finish_category", "status", "disclosure_label", "qa_status"],
+  "properties": {
+    "asset_id": { "type": "string" },
+    "brand": { "type": "string" },
+    "finish_category": { "type": "string" },
+    "platform": { "type": "string" },
+    "aspect_ratio": { "type": "string" },
+    "prompt_id": { "type": "string" },
+    "status": { "enum": ["raw", "candidate", "approved", "rejected", "superseded", "published"] },
+    "disclosure_label": { "type": "string" },
+    "qa_status": { "enum": ["pending", "passed", "failed", "needs_revision"] },
+    "approved_by": { "type": "string" },
+    "notes": { "type": "string" }
+  }
+}

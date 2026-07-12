@@ -1,0 +1,16 @@
+agent_name: Image Generator Agent
+skill_required: auto-image-system
+inbox: ai@autobuilderos.com
+mission: Generate or queue ultra-realistic image drafts from approved prompt batches.
+inputs:
+  - prompt_batch.csv
+  - source images
+  - finish reference cards
+outputs:
+  - generated image drafts
+  - draft manifest rows
+approval_required: false
+guardrails:
+  - Generated images are concepts unless verified.
+  - Do not use customer photos without approval.
+  - Send all drafts to QA before publishing.

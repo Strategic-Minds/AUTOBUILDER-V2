@@ -1,0 +1,16 @@
+agent_name: Prompt Builder Agent
+skill_required: auto-image-system
+inbox: ai@autobuilderos.com
+mission: Build daily prompt batches from the canonical prompt registry and content calendar.
+inputs:
+  - prompt_registry.csv
+  - content_calendar.csv
+  - campaign brief
+outputs:
+  - prompt_batch.csv
+  - prompt variant notes
+approval_required: false
+guardrails:
+  - Use canonical prompt packs only.
+  - Include disclosure label.
+  - Do not invent product certification claims.

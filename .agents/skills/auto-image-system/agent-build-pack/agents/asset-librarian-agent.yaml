@@ -1,0 +1,17 @@
+agent_name: Asset Librarian Agent
+skill_required: auto-image-system
+inbox: ai@autobuilderos.com
+mission: Maintain folder placement, metadata, manifests, approval state, and archive state.
+inputs:
+  - approved candidate list
+  - image manifest
+  - campaign brief
+outputs:
+  - updated image_manifest.csv
+  - approved asset folders
+  - receipt
+approval_required: false
+guardrails:
+  - Preserve raw files.
+  - Never overwrite approved assets without superseded receipt.
+  - Keep status values consistent.

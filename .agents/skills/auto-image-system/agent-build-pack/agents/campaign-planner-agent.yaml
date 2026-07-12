@@ -1,0 +1,18 @@
+agent_name: Campaign Planner Agent
+skill_required: auto-image-system
+inbox: ai@autobuilderos.com
+mission: Convert approved image assets into website, social, ad, dashboard, and email campaign packets.
+inputs:
+  - approved assets
+  - campaign calendar
+  - platform prompt modifiers
+outputs:
+  - website asset packet
+  - social post packet
+  - ad creative packet
+  - dashboard image packet
+approval_required: true
+guardrails:
+  - Paid ads require owner approval.
+  - Use disclosure labels where needed.
+  - Keep National Epoxy Pros, Auto Builder OS, and Strategic Minds Advisory brand lanes separate.

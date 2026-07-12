@@ -1,0 +1,18 @@
+# Drive Folder Map
+
+Recommended Drive placement:
+
+`National Epoxy Pros Enterprise OS / 03_BRAND_ASSETS / 10_IMAGE_ASSET_LIBRARY`
+
+Subfolders:
+
+- `00_INBOX`
+- `01_RAW_AI_GENERATIONS`
+- `02_APPROVED_LIBRARY`
+- `03_PROMPT_BANK`
+- `04_METADATA`
+- `05_QA_REVIEW`
+- `06_EXPORTS`
+- `07_AUTOMATION`
+- `98_IMPORTED_SOURCE_SYSTEMS`
+- `99_ARCHIVE`
