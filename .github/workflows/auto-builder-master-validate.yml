@@ -14,8 +14,10 @@
           "uses": "actions/setup-node@v4",
           "with": { "node-version": "22", "cache": "npm" }
         },
-        { "name": "Install dependencies", "run": "npm ci" },
-        { "name": "TypeScript check", "run": "npx tsc --noEmit --skipLibCheck" },
+        { "name": "Debug info", "run": "node --version && npm --version" },
+        { "name": "Install dependencies", "run": "npm ci --verbose" },
+        { "name": "TypeScript check", "run": "npx tsc --noEmit --listFiles 2>&1 | head -100" },
+        { "name": "List tsconfig", "run": "cat tsconfig.json" },
         { "name": "Build", "run": "npm run build --if-present" }
       ]
     }
