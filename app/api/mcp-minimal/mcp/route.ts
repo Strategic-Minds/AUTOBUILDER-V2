@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// Lightweight MCP endpoint — proxies to the full /api/mcp server
-// Used for ChatGPT MCP connector compatibility
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    endpoint: '/api/mcp-minimal/mcp',
+    protocol: 'JSON-RPC 2.0 (MCP)',
+    status: 'ready',
+    tools_available: 38,
+    description: 'Lightweight MCP relay for ChatGPT and other MCP clients',
+    timestamp: new Date().toISOString()
+  })
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,16 +36,4 @@ export async function POST(req: NextRequest) {
       id: null
     }, { status: 500 })
   }
-}
-
-export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    route: 'mcp-minimal',
-    description: 'Lightweight MCP relay → /api/mcp (38 tools)',
-    endpoint: 'https://www.autobuilderos.com/api/mcp-minimal/mcp',
-    full_endpoint: 'https://www.autobuilderos.com/api/mcp',
-    protocol: 'JSON-RPC 2.0 / MCP',
-    timestamp: new Date().toISOString()
-  })
 }
