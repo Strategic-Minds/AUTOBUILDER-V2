@@ -65,7 +65,8 @@ async function dependenciesSatisfied(job: FactoryJobRow): Promise<boolean> {
 }
 
 export async function claimNextAutonomyJob(workerId: string, leaseSeconds = 240) {
-  const queued = await sbOp<FactoryJobRow[]>('factory_jobs?queue_name=eq.autonomy&status=eq.queued&order=priority.asc,created_at.asc&limit=5');
+  const buildTypes = 'autonomous-build-root,autonomous-build-start,autonomous-build-monitor,autonomous-build-finalize,bulk-ingest';
+  const queued = await sbOp<FactoryJobRow[]>(`factory_jobs?queue_name=eq.autonomy&status=eq.queued&job_type=not.in.(${buildTypes})&order=priority.asc,created_at.asc&limit=5`);
   if (!queued.ok) throw new Error(`Failed to inspect autonomy queue: ${queued.error ?? queued.status}`);
   for (const candidate of Array.isArray(queued.data) ? queued.data : []) {
     if (!(await dependenciesSatisfied(candidate))) continue;
