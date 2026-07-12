@@ -111,3 +111,77 @@ export interface McpToolDefinition {
   description: string;
   inputSchema: Record<string, unknown>;
 }
+
+export const AUTONOMY_STAGES = [
+  'INTAKE',
+  'INGESTION',
+  'PLANNING',
+  'SWARM',
+  'BUILD',
+  'BROWSER_VALIDATION',
+  'PROVISIONING',
+  'VALIDATION',
+  'FINALIZATION',
+  'COMPLETE',
+] as const;
+
+export type AutonomyStage = (typeof AUTONOMY_STAGES)[number];
+export type AutonomyStatus = 'QUEUED' | 'RUNNING' | 'PAUSED' | 'NEEDS_INPUT' | 'FAILED' | 'CANCELLED' | 'COMPLETE';
+
+export interface AutonomousBuild {
+  id: string;
+  idempotency_key: string;
+  title: string;
+  mission: string;
+  requested_outputs: string[];
+  source_manifest: Record<string, unknown>;
+  browser_mode: 'auto' | 'headless' | 'headful';
+  max_concurrency: number;
+  priority: number;
+  status: AutonomyStatus;
+  current_stage: AutonomyStage;
+  progress: number;
+  upstream_run_id: string | null;
+  upstream_status: Record<string, unknown>;
+  github_repo_url: string | null;
+  github_branch: string | null;
+  github_pr_url: string | null;
+  vercel_project_id: string | null;
+  vercel_project_url: string | null;
+  preview_url: string | null;
+  validation_score: number | null;
+  artifact_manifest: unknown[];
+  retry_count: number;
+  last_error: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
+export type FactoryJob = FactoryJobRow;
+
+export interface SubmitAutonomousBuildInput {
+  title: string;
+  mission: string;
+  requestedOutputs?: string[];
+  sourceManifest?: Record<string, unknown>;
+  priority?: number;
+  browserMode?: 'headless' | 'headful' | 'auto';
+  maxConcurrency?: number;
+}
+
+export interface UpstreamSwarmStatus {
+  status?: string;
+  progress?: number;
+  github_repo_url?: string;
+  github_branch?: string;
+  github_pr_url?: string;
+  vercel_project_id?: string;
+  vercel_project_url?: string;
+  preview_url?: string;
+  validation_score?: number;
+  artifacts?: unknown[];
+  result?: Record<string, unknown>;
+  [key: string]: unknown;
+}
