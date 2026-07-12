@@ -21,8 +21,6 @@ async function sbOp<T = unknown>(path: string, method = 'GET', body?: unknown): 
 }
 
 interface HealResult { trigger: string; job_id: string; before: Record<string,unknown>; after: Record<string,unknown>; receipt_id: string | null; verified: boolean; }
-interface LeasedJob { id: string; job_id: string; lease_owner: string; attempt_count: number; max_attempts: number; }
-interface StatusRow { status: string; lease_owner?: string | null; }
 
 export async function POST(req: NextRequest) {
   const auth = authorizeInternalRequest(req, 'jobs:heal');
@@ -34,22 +32,22 @@ export async function POST(req: NextRequest) {
   const failed: string[] = [];
 
   // Scenario 1: Expired leases
+  type LeasedJob = { id: string; job_id: string; lease_owner: string; attempt_count: number; max_attempts: number };
   const expired = await sbOp<LeasedJob[]>(
     `factory_jobs?status=eq.leased&lease_expires_at=lt.${new Date().toISOString()}&limit=10&job_type=neq.heartbeat-lock`
   );
   if (expired.ok && Array.isArray(expired.data)) {
     for (const job of expired.data) {
-      const before = { status: 'leased', lease_owner: job.lease_owner };
+      const before: Record<string,unknown> = { status: 'leased', lease_owner: job.lease_owner };
       const newStatus = (job.attempt_count + 1) >= job.max_attempts ? 'failed' : 'queued';
       await sbOp(`factory_jobs?id=eq.${job.id}`, 'PATCH', { status: newStatus, lease_owner: null, lease_expires_at: null, last_error: 'lease_expired_auto_healed' });
-      const verify = await sbOp<StatusRow[]>(`factory_jobs?id=eq.${job.id}&select=status,lease_owner`);
-      const afterRow: StatusRow = Array.isArray(verify.data) && verify.data[0] ? verify.data[0] : { status: '', lease_owner: null } as StatusRow;
-      const after: Record<string,unknown> = afterRow;
-      const verified = afterRow.status === newStatus && afterRow.lease_owner === null;
+      const verify = await sbOp<Record<string,unknown>[]>(`factory_jobs?id=eq.${job.id}&select=status,lease_owner`);
+      const after: Record<string,unknown> = (Array.isArray(verify.data) && verify.data[0]) ? verify.data[0] : {};
+      const verified = after['status'] === newStatus && after['lease_owner'] === null;
       const rcp = await sbOp<Array<{ receipt_id: string }>>('factory_receipts', 'POST', {
         receipt_type: 'auto-heal', status: verified ? 'success' : 'failure', produced_by: 'auto-heal-engine',
         action_summary: `Healed expired lease: ${job.job_id} → ${newStatus}`,
-        evidence: { run_id: runId, job_id: job.job_id, before, after, verified, compensation: `PATCH factory_jobs SET status='leased',lease_owner='${job.lease_owner}' WHERE job_id='${job.job_id}'` },
+        evidence: { run_id: runId, job_id: job.job_id, before, after, verified },
         rollback_available: true,
       });
       healed.push({ trigger: 'expired_lease', job_id: job.job_id, before, after, receipt_id: Array.isArray(rcp.data) ? rcp.data[0]?.receipt_id : null, verified });
@@ -57,16 +55,16 @@ export async function POST(req: NextRequest) {
   }
 
   // Scenario 2: Retryable failed jobs
-  const retryable = await sbOp<Array<{ id: string; job_id: string; attempt_count: number; max_attempts: number }>>(`factory_jobs?status=eq.failed&limit=5`);
+  type RetryJob = { id: string; job_id: string; attempt_count: number; max_attempts: number };
+  const retryable = await sbOp<RetryJob[]>(`factory_jobs?status=eq.failed&limit=5`);
   if (retryable.ok && Array.isArray(retryable.data)) {
     for (const job of retryable.data) {
       if (job.attempt_count < job.max_attempts) {
-        const before = { status: 'failed', attempt_count: job.attempt_count };
+        const before: Record<string,unknown> = { status: 'failed', attempt_count: job.attempt_count };
         await sbOp(`factory_jobs?id=eq.${job.id}`, 'PATCH', { status: 'queued', last_error: null });
-        const verify = await sbOp<StatusRow[]>(`factory_jobs?id=eq.${job.id}&select=status`);
-        const afterRow: StatusRow = Array.isArray(verify.data) && verify.data[0] ? verify.data[0] : { status: '' };
-        const after: Record<string,unknown> = afterRow;
-        const verified = afterRow.status === 'queued';
+        const verify = await sbOp<Record<string,unknown>[]>(`factory_jobs?id=eq.${job.id}&select=status`);
+        const after: Record<string,unknown> = (Array.isArray(verify.data) && verify.data[0]) ? verify.data[0] : {};
+        const verified = after['status'] === 'queued';
         const rcp = await sbOp<Array<{ receipt_id: string }>>('factory_receipts', 'POST', { receipt_type: 'auto-heal', status: verified ? 'success' : 'failure', produced_by: 'auto-heal-engine', action_summary: `Requeued: ${job.job_id}`, evidence: { run_id: runId, job_id: job.job_id, before, after, verified }, rollback_available: true });
         healed.push({ trigger: 'retryable_failure', job_id: job.job_id, before, after, receipt_id: Array.isArray(rcp.data) ? rcp.data[0]?.receipt_id : null, verified });
       }
