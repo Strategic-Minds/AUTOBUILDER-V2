@@ -1,3 +1,4 @@
+// rebuild 2026-07-12T19:18:46.369669
 // build-trigger: 2026-07-12T19:08:54.631551
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
