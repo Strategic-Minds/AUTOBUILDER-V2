@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { requireCronSecret } from '@/lib/api-auth'
 import { dbGetProjects, dbUpdateProject, dbUpdateCronJob } from '@/lib/supabase/db'
 
@@ -19,7 +19,7 @@ function calculateReadiness(p: Record<string, unknown>): number {
   return Math.min(score, 100)
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const start = Date.now()
   try { requireCronSecret(req)
     const projects = await dbGetProjects()
