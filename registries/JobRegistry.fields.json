@@ -1,0 +1,17 @@
+{
+  "entity": "JobRegistry",
+  "fields": [
+    "job_id",
+    "job_type",
+    "related_project_id",
+    "queue_state",
+    "attempt_count",
+    "max_attempts",
+    "last_error",
+    "assigned_agent",
+    "scheduled_for",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

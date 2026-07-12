@@ -1,0 +1,17 @@
+{
+  "entity": "DriftRegistry",
+  "fields": [
+    "drift_id",
+    "related_system",
+    "drift_type",
+    "expected_state",
+    "actual_state",
+    "severity",
+    "detected_at",
+    "resolved",
+    "resolved_at",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

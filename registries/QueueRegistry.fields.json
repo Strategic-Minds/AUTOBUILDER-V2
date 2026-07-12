@@ -1,0 +1,16 @@
+{
+  "entity": "QueueRegistry",
+  "fields": [
+    "queue_name",
+    "queue_slug",
+    "description",
+    "valid_states",
+    "current_depth",
+    "stale_threshold_minutes",
+    "owner_agent",
+    "last_reconciled_at",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}

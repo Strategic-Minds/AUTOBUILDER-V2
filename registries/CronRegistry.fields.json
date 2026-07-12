@@ -1,0 +1,17 @@
+{
+  "entity": "CronRegistry",
+  "fields": [
+    "cron_name",
+    "cron_slug",
+    "frequency_tier",
+    "description",
+    "base44_automation_id",
+    "last_run_at",
+    "last_run_status",
+    "next_run_at",
+    "autonomy_level",
+    "notes"
+  ],
+  "source": "Base44 Superagent entity (live source of truth)",
+  "exported_at": "2026-07-02"
+}
