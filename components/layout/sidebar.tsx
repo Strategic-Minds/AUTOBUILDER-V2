@@ -50,6 +50,12 @@ const navigation: NavSection[] = [
       { label: "Price Book", href: "/price-book", icon: BookOpen },
     ],
   },
+  {
+    label: "Communication",
+    items: [
+      { label: "Agent Chatroom", href: "/chatroom", icon: MessageSquare },
+    ],
+  },
 ];
 
 function NavBadge({ variant, value }: { variant?: NavItem["badgeVariant"]; value: string | number }) {
