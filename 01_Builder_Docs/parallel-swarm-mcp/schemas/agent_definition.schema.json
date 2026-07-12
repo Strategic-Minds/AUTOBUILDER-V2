@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Swarm agent definition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["agent_id", "run_id", "agent_path", "role_key", "status"],
+  "properties": {
+    "agent_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "parent_agent_id": {"type": ["string", "null"]},
+    "agent_path": {"type": "string"},
+    "role_key": {"type": "string"},
+    "task_packet_id": {"type": ["string", "null"]},
+    "context_snapshot_id": {"type": "string"},
+    "allowed_tool_names": {"type": "array", "items": {"type": "string"}},
+    "workspace_binding": {"type": "object"},
+    "response_id": {"type": ["string", "null"]},
+    "status": {"enum": ["CREATED", "ACTIVE", "WAITING", "COMPLETED", "FAILED", "CANCELLED"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"}
+  }
+}
