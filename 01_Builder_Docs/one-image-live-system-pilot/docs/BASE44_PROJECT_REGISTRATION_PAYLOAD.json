@@ -1,0 +1,32 @@
+{
+  "app_id": "6a4ae522852a5e08bfa42450",
+  "project_record": {
+    "project_id": "one-image-pipeline-pilot-001",
+    "business_name": "National Concrete Polishing",
+    "package_level": "Golden One Image Pilot",
+    "lifecycle_stage": "mvp_build",
+    "queue_state": "active",
+    "payment_state": "not_applicable",
+    "approval_state": "approved_for_preview_only",
+    "revision_count": 0,
+    "current_score": 0,
+    "next_action": "Consume the zero-ambiguity execution workbook, install verified binaries on the pilot branch, repair preview binding, build, validate, and stop at preview acceptance.",
+    "owner_agent": "Base44 AUTO BUILDER ORCHESTRATOR",
+    "drive_link": "https://docs.google.com/spreadsheets/d/1zQDsbH09HcfZzyZcMO2JTvh1W8Yzipc9/edit",
+    "repo_link": "https://github.com/Strategic-Minds/AUTOBUILDER-V2/pull/4",
+    "preview_link": "",
+    "source_of_truth_ref": "BASE44_ZERO_AMBIGUITY_ONE_IMAGE_EXECUTION_WORKBOOK_V1.xlsx sha256:9eb2481c9e88e07c10ccaf69be4e0db99193427d536b0b1056e3052c239a4074",
+    "notes": "GPT owns planning, exact UI, workbook architecture, orchestration, and independent validation. Base44 owns implementation and sub-agent execution. Production locked."
+  },
+  "jobs": [
+    {"job_id":"JOB-001","job_type":"source_intake","queue_state":"on_deck","attempt_count":0,"max_attempts":1,"assigned_agent":"Source Truth Agent","notes":"Fetch and hash approved image and Golden Workbook."},
+    {"job_id":"JOB-002","job_type":"binary_install","queue_state":"on_deck","attempt_count":0,"max_attempts":2,"assigned_agent":"GitHub Installer Agent","notes":"Install binaries on auto-builder/one-image-pipeline-pilot-001 only."},
+    {"job_id":"JOB-003","job_type":"project_registration","queue_state":"on_deck","attempt_count":0,"max_attempts":2,"assigned_agent":"Base44 Registry Agent","notes":"Create project, jobs, workflow, receipt and decision records; query them back."},
+    {"job_id":"JOB-004","job_type":"vercel_repair","queue_state":"on_deck","attempt_count":0,"max_attempts":3,"assigned_agent":"Vercel Agent","notes":"Diagnose stale binding and create or relink preview-only project. Stop for secrets/env changes."},
+    {"job_id":"JOB-005","job_type":"branch_build","queue_state":"on_deck","attempt_count":0,"max_attempts":3,"assigned_agent":"Frontend and Backend Agents","notes":"Implement exact workbook and approved image requirements, one capability per commit."},
+    {"job_id":"JOB-006","job_type":"preview_deploy","queue_state":"on_deck","attempt_count":0,"max_attempts":3,"assigned_agent":"Vercel Agent","notes":"Preview only. No production deployment."},
+    {"job_id":"JOB-007","job_type":"qa_cycle","queue_state":"on_deck","attempt_count":0,"max_attempts":3,"assigned_agent":"QA Swarm","notes":"Build, runtime, responsive, accessibility, security and visual parity checks."},
+    {"job_id":"JOB-008","job_type":"bounded_repair","queue_state":"on_deck","attempt_count":0,"max_attempts":3,"assigned_agent":"Repair Agent","notes":"Maximum three narrow repairs per defect."},
+    {"job_id":"JOB-009","job_type":"preview_acceptance","queue_state":"on_deck","attempt_count":0,"max_attempts":1,"assigned_agent":"Release Agent","notes":"Compile evidence and stop for operator decision. No merge or production."}
+  ]
+}
