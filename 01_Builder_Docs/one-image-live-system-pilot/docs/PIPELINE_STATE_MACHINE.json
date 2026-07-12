@@ -1,0 +1,34 @@
+{
+  "project_id": "one-image-pipeline-pilot-001",
+  "initial_state": "PLAN",
+  "states": [
+    "PLAN",
+    "DISCOVERY",
+    "VISUAL_APPROVAL",
+    "PROJECT_DOCS",
+    "PROVISIONING_DRY_RUN",
+    "BRANCH_BUILD",
+    "VALIDATION",
+    "BOUNDED_REPAIR",
+    "PREVIEW_ACCEPTANCE",
+    "RELEASE_APPROVAL"
+  ],
+  "protected_after": "PREVIEW_ACCEPTANCE",
+  "max_repairs_per_defect": 3,
+  "production_default": "locked",
+  "required_evidence": [
+    "image_sha256",
+    "workbook_sha256",
+    "source_truth_receipt",
+    "requirements_graph",
+    "visual_contract",
+    "branch_commit_sha",
+    "preview_url",
+    "desktop_screenshot",
+    "mobile_screenshot",
+    "test_receipts",
+    "visual_parity_report",
+    "rollback_receipt",
+    "operator_preview_decision"
+  ]
+}
