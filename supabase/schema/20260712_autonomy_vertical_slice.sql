@@ -109,7 +109,9 @@ begin
   return query
   with picked as (
     select id from public.factory_jobs
-    where queue_name='autonomy' and status='queued'
+    where queue_name='autonomy'
+      and status='queued'
+      and job_type in ('autonomous-build-root','autonomous-build-start','autonomous-build-monitor','autonomous-build-finalize','bulk-ingest')
     order by priority asc, created_at asc
     for update skip locked limit greatest(1,least(20,p_limit))
   )
