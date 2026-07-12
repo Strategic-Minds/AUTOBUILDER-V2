@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Root swarm result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_id", "status", "executive_summary", "requirements", "agent_tree", "artifacts", "receipts"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "idea_id": {"type": ["string", "null"]},
+    "status": {"enum": ["COMPLETED", "PARTIAL", "FAILED", "CANCELLED"]},
+    "executive_summary": {"type": "string"},
+    "requirements": {"type": "array", "items": {"type": "object"}},
+    "agent_tree": {"type": "array", "items": {"type": "object"}},
+    "artifacts": {"type": "array", "items": {"type": "object"}},
+    "github_changes": {"type": "array", "items": {"type": "object"}},
+    "vercel_changes": {"type": "array", "items": {"type": "object"}},
+    "tests": {"type": "array", "items": {"type": "object"}},
+    "receipts": {"type": "array", "items": {"type": "object"}},
+    "blockers": {"type": "array", "items": {"type": "string"}},
+    "next_actions": {"type": "array", "items": {"type": "string"}}
+  }
+}
