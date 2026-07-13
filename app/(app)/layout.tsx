@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--color-background)]">
-      <Sidebar displayName={displayName} initials={initials} email={user.email ?? ""} />
+      <Sidebar displayName={displayName} initials={initials} />
       
       <AppChatPanel />
 
