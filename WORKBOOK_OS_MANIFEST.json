@@ -1,0 +1,20 @@
+{
+  "manifest_version": "1.0",
+  "updated_at": "2026-07-13T20:16:00Z",
+  "workbooks": [
+    {
+      "workbook_id": "ALPHA-HEADFUL-AI-001",
+      "workbook_name": "ALPHA_HEADFUL_AI_MAXIMUM_CEILING_WORKBOOK.xlsx",
+      "workbook_type": "LAUNCH_VALIDATION_WORKBOOK",
+      "repo_path": "01_Builder_Docs/alpha-headful-ai/ALPHA_HEADFUL_AI_MAXIMUM_CEILING_WORKBOOK.xlsx",
+      "controller_path": "01_Builder_Docs/alpha-headful-ai/README.md",
+      "drive_file_id": "1LhzjZz_ReMAj4Ee4VaWJtGCEjMByKdCm",
+      "drive_folder_id": "1p3ZK6g7ELt7IBd0nZQCyIrHAOfqkrCZW",
+      "status": "pending_binary_upload",
+      "source_of_truth_rank": "support/workbook_primary",
+      "production_gate": "locked_until_preview_route_screenshot_operator_approval",
+      "vercel_project_id": "prj_qaUnGOL4MmPvm11Hqxp9Cn0YDfmv",
+      "supabase_project_id": "prhppuuwcnmfdhwsagug"
+    }
+  ]
+}
