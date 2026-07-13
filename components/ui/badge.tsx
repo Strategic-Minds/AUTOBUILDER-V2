@@ -1,33 +1,29 @@
 import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-semibold transition-colors tracking-wide uppercase",
-  {
-    variants: {
-      variant: {
-        default: "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-foreground)]",
-        primary: "border-indigo-500/30 bg-indigo-500/10 text-indigo-300",
-        success: "border-green-500/30 bg-green-500/10 text-green-400",
-        warning: "border-amber-500/30 bg-amber-500/10 text-amber-400",
-        danger: "border-red-500/30 bg-red-500/10 text-red-400",
-        muted: "border-transparent bg-[var(--color-surface-3)] text-[var(--color-muted-foreground)]",
-        outline: "border-[var(--color-border)] bg-transparent text-[var(--color-muted-foreground)]",
-      },
-    },
-    defaultVariants: { variant: "default" },
-  }
-);
+type BadgeVariant = "primary" | "success" | "warning" | "danger" | "muted";
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+const variants: Record<BadgeVariant, string> = {
+  primary: "bg-[rgba(10,132,255,0.14)] text-[#7cc4ff] border-[rgba(10,132,255,0.3)]",
+  success: "bg-[rgba(31,208,117,0.12)] text-[#6ee7b7] border-[rgba(31,208,117,0.24)]",
+  warning: "bg-[rgba(245,166,35,0.12)] text-[#fcd34d] border-[rgba(245,166,35,0.24)]",
+  danger:  "bg-[rgba(232,64,64,0.12)] text-[#fca5a5] border-[rgba(232,64,64,0.24)]",
+  muted:   "bg-[var(--color-surface-3)] text-[var(--color-muted-foreground)] border-[var(--color-border)]",
+};
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+export function Badge({
+  variant = "muted",
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement> & { variant?: BadgeVariant }) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold capitalize leading-none tracking-wide",
+        variants[variant],
+        className
+      )}
+      {...props}
+    />
   );
 }
-
-export { Badge, badgeVariants };
