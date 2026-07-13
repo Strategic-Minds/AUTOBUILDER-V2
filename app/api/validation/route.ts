@@ -18,7 +18,7 @@ async function sbInsert(table: string, data: Record<string, unknown>) {
   return { ok: r.ok, status: r.status }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<Response> {
   try {
     return NextResponse.json({
       ok: true,
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
   try {
     const body = await req.json()
     const { test_type, status, score, evidence } = body
