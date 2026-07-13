@@ -9,7 +9,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.autobuilderos.c
  * Supports both GET (tools list) and POST (JSON-RPC calls)
  */
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<Response> {
   try {
     return NextResponse.json({
       ok: true,
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
   try {
     const body = await req.json()
     const res = await fetch(`${BASE_URL}/api/mcp`, {
