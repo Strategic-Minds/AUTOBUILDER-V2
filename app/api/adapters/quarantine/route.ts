@@ -3,7 +3,7 @@ import { authorizeInternalRequest, makeUnauthorizedResponse } from '@/lib/intern
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
   const authCtx = authorizeInternalRequest(req, 'jobs:quarantine')
   if (!authCtx.ok) return makeUnauthorizedResponse(authCtx)
 
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<Response> {
   const authCtx = authorizeInternalRequest(req, 'jobs:quarantine')
   if (!authCtx.ok) return makeUnauthorizedResponse(authCtx)
 
