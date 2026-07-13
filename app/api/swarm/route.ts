@@ -1,6 +1,6 @@
 import { generateObject } from "ai";
 import { z } from "zod";
-import { SWARM } from "@/lib/reality-os";
+import { SWARM } from "@/lib/xtreme-builder";
 
 export const maxDuration = 30;
 
