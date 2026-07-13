@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const ipMap = new Map<string, { count: number; resetAt: number }>()
 
 export function rateLimit(req: NextRequest, limit = 60, windowMs = 60000): { success: boolean; limit: number; remaining: number; reset: number } {
-  const ip = req.headers.get('x-forwarded-for') || req.ip || '127.0.0.1'
+  const ip = req.headers.get('x-forwarded-for') || (req as any).ip || '127.0.0.1'
   const now = Date.now()
   const record = ipMap.get(ip)
 
