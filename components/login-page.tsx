@@ -71,7 +71,7 @@ export default function LoginPage() {
             XPS INTELLIGENCE
           </span>
           <span style={{ color: 'rgba(255,255,255,0.20)', fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.10em' }}>
-            // AI BUILD OS
+            {/* // AI BUILD OS */}
           </span>
         </div>
         <div style={{
