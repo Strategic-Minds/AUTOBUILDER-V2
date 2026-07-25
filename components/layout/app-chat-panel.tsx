@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { Send, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,17 +14,19 @@ export function AppChatPanel() {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
-  const { messages, append, isLoading } = useChat({
-    api: "/api/chat",
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({ api: "/api/chat" }),
   });
+  const isLoading = status === "submitted" || status === "streaming";
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = () => {
-    if (inputValue.trim() && !isLoading) {
-      append({ role: "user", content: inputValue.trim() });
+    const text = inputValue.trim();
+    if (text && !isLoading) {
+      sendMessage({ text });
       setInputValue("");
     }
   };
@@ -53,8 +56,11 @@ export function AppChatPanel() {
           <div className="space-y-4 pb-2">
             {messages.map((msg) => {
               const isUser = msg.role === "user";
-              const text = msg.content;
-              if (!text?.trim()) return null;
+              const text = msg.parts
+                .filter((part) => part.type === "text")
+                .map((part) => part.text)
+                .join("\n");
+              if (!text.trim()) return null;
               return (
                 <div key={msg.id} className={cn("flex gap-2.5", isUser && "flex-row-reverse")}>
                   <div className={cn(
