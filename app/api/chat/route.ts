@@ -1,4 +1,4 @@
-import { convertToCoreMessages, streamText, tool, type UIMessage } from "ai";
+import { convertToModelMessages, streamText, tool, type UIMessage } from "ai";
 import { z } from "zod";
 
 export const maxDuration = 30;
@@ -88,9 +88,9 @@ export async function POST(req: Request) {
   const result = streamText({
     model: "openai/gpt-4.1-mini",
     system: SYSTEM_PROMPT,
-    messages: await convertToCoreMessages(messages),
+    messages: await convertToModelMessages(messages),
     tools,
   });
 
-  return result.toDataStreamResponse();
+  return result.toUIMessageStreamResponse();
 }
