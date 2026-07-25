@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic'
 // vercel.json: { "crons": [{ "path": "/api/cron/heartbeat", "schedule": "*/5 * * * *" }] }
 export async function GET(req: NextRequest) {
   const start = Date.now()
-  try { requireCronSecret(req)
+  try {
+    requireCronSecret(req)
     const projects = await dbGetProjects()
     const active = projects.filter(p => p.status === 'active').length
     const blocked = projects.filter(p => p.status === 'blocked').length
@@ -42,12 +43,17 @@ export async function GET(req: NextRequest) {
       duration_ms: Date.now() - start,
     })
   } catch (err) {
+    // Authentication helpers intentionally throw a Response. Preserve its
+    // original status instead of converting an expected 403 into a 500 and
+    // avoid recording an authentication probe as a failed cron execution.
+    if (err instanceof Response) return err
+
     console.error('[cron/heartbeat]', err)
     await dbUpdateCronJob('heartbeat', {
       last_run_at: new Date().toISOString(),
       last_status: 'failed',
       last_duration_ms: Date.now() - start,
     }).catch(() => {})
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'Unknown heartbeat failure' }, { status: 500 })
   }
 }
