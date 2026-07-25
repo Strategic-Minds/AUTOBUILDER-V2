@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useChat, DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "@ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 
 import {
   Sparkles, ArrowUp, Square, Bot, User, Wrench, LayoutDashboard,
