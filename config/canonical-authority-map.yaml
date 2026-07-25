@@ -1,0 +1,42 @@
+version: 1
+updated_at: 2026-07-25
+production_status: LOCKED
+
+primary_runtime:
+  repository: Strategic-Minds/AUTOBUILDER-V2
+  branch_policy: branch_and_draft_pr_only
+
+source_truth:
+  workbook: GOLDEN_UNIVERSAL_PROJECT_FACTORY_ALL_IN_ONE_CEILING_V6.xlsx
+  workbook_sha256: fdc359fdc44237cf29c6ab11b291780d07f792cd9278f98a86649c76a047052b
+
+controlled_donors:
+  ui:
+    repository: Strategic-Minds/auto-builder-os
+  validation_observability_pwa:
+    repository: Strategic-Minds/XAB
+  bridge_mcp_workflow_governance:
+    repository: Strategic-Minds/AUTO_BUILDER-V1
+  advanced_runtime_adapters:
+    repository: Strategic-Minds/v0-auto-builder-v2
+
+independent_services:
+  browser_validation:
+    repository: Strategic-Minds/BROWSERWORKER
+    merge_into_runtime: false
+
+reference_only:
+  - Strategic-Minds/FULL-AUTO
+  - XPS-IINTELLIGENCE-SYSTEMS/XPS_AUTO_BUILDER
+
+protected_actions:
+  - merge_to_default_branch
+  - production_deploy
+  - production_database_migration
+  - secret_change
+  - domain_change
+  - billing_or_spend
+  - destructive_action
+  - customer_communication
+
+required_release_state: AWAITING_PRODUCTION_APPROVAL
