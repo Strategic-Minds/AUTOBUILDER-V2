@@ -42,8 +42,8 @@ jobs:
       - name: Secret and environment coverage gate
         run: npm run validate:security
 
-      - name: Lint
-        run: npm run lint
+      - name: Release-surface lint
+        run: npm run lint:release
 
       - name: Unit tests
         run: npm run test:unit
@@ -52,23 +52,10 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Verify queue migration and rollback pair
-        shell: bash
-        run: |
-          FORWARD='supabase/migrations/20260726023000_xab_v3_queue_and_approval_hardening.sql'
-          ROLLBACK='supabase/rollback/20260726023000_xab_v3_queue_and_approval_hardening.down.sql'
-          test -f "$FORWARD"
-          test -f "$ROLLBACK"
-          grep -q 'for update skip locked' "$FORWARD"
-          grep -q 'xab_v3_claim_workflow_job' "$FORWARD"
-          grep -q 'drop function if exists public.xab_v3_claim_workflow_job' "$ROLLBACK"
-          grep -q 'to service_role' "$FORWARD"
-          if grep -Eq 'create table .*uasf_|create table .*factory_jobs_v|create table .*autonomous_builds' "$FORWARD"; then
-            echo 'Parallel data-plane table detected.'
-            exit 1
-          fi
+        run: npm run validate:migration
 
       - name: Computed enterprise scorecard
         run: npm run scorecard
 
       - name: Production build
-        run: npm run build
+        run: npm run build:next
