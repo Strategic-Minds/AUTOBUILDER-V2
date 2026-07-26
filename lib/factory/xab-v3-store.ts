@@ -28,6 +28,11 @@ type WorkflowJobRow = {
   max_attempts: number
   lease_owner: string | null
   lease_expires_at: string | null
+  available_at: string
+  lease_token: string | null
+  last_heartbeat_at: string | null
+  finished_at: string | null
+  dead_lettered_at: string | null
   last_error: string | null
   created_at: string
   updated_at: string
@@ -60,6 +65,19 @@ async function db<T>(path: string, method = 'GET', body?: unknown, prefer = 'ret
   }
   if (!response.ok) throw new Error(`Database ${method} failed ${response.status}: ${text.slice(0, 600)}`)
   return parsed as T
+}
+
+
+async function rpc<T>(name: string, body: JsonRecord): Promise<T> {
+  try {
+    return await db<T>(`rpc/${name}`, 'POST', body)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('PGRST202') || message.includes('Could not find the function')) {
+      throw new Error(`FACTORY_QUEUE_MIGRATION_REQUIRED: ${name}`)
+    }
+    throw error
+  }
 }
 
 const enc = encodeURIComponent
@@ -172,45 +190,18 @@ export async function approveOption(input: {
   comment?: string
   actor: string
   ownerEmail: string
+  testAutoApproval?: boolean
 }) {
   if (![1, 2, 3].includes(input.option)) throw new Error('Option must be 1, 2, or 3')
-  const bundle = await getProjectBundle(input.projectId, input.ownerEmail)
-  const approval = await pendingApproval(input.projectId, input.kind)
-  if (!approval) throw new Error(`No pending ${input.kind} approval exists`)
-  const confirmedAt = new Date().toISOString()
-  await db(`xab_v3_approval_requests?id=eq.${enc(approval.id)}`, 'PATCH', {
-    state: 'approved',
-    selected_option: input.option,
-    comment: input.comment || null,
-    confirmed_by: input.actor,
-    confirmed_at: confirmedAt,
-    updated_at: confirmedAt,
+  return rpc<JsonRecord>('xab_v3_approve_option', {
+    p_project_id: input.projectId,
+    p_kind: input.kind,
+    p_option: input.option,
+    p_comment: input.comment || '',
+    p_actor: input.actor,
+    p_owner_email: input.ownerEmail,
+    p_test_auto_approval: input.testAutoApproval === true,
   })
-  await db('xab_v3_approval_decisions', 'POST', {
-    approval_id: approval.id,
-    decision: 'approved',
-    selected_option: input.option,
-    comment: input.comment || null,
-    confirmed_by: input.actor,
-  })
-  const metadata = { ...(bundle.project.metadata || {}) }
-  if (input.kind === 'logo') {
-    await patchProject(input.projectId, { status: 'generating', metadata: { ...metadata, approved_logo_option: input.option } })
-    await queueJob(input.projectId, 'generate_website_options', 'website', `website:${input.projectId}`, {
-      approved_logo_option: input.option,
-    })
-  } else {
-    await patchProject(input.projectId, { status: 'approved', metadata: { ...metadata, approved_website_option: input.option } })
-    await queueJob(input.projectId, 'build_final_system', 'build', `build:${input.projectId}`, {
-      approved_website_option: input.option,
-    })
-  }
-  await receipt(input.projectId, `${input.kind}_approved`, true, {
-    option: input.option,
-    actor: input.actor,
-    production_locked: true,
-  })
-  return { approval_id: approval.id, selected_option: input.option }
 }
 
 function fallbackBrandOptions(project: ProjectRow) {
@@ -461,22 +452,34 @@ async function monitorFinalBuild(project: ProjectRow, payload: JsonRecord) {
 }
 
 export async function claimFactoryJob(workerId: string) {
-  const queued = await db<WorkflowJobRow[]>('xab_v3_workflow_jobs?state=eq.queued&order=created_at.asc&limit=5')
-  for (const candidate of queued) {
-    const claimed = await db<WorkflowJobRow[]>(
-      `xab_v3_workflow_jobs?id=eq.${enc(candidate.id)}&state=eq.queued`,
-      'PATCH',
-      {
-        state: 'running',
-        lease_owner: workerId,
-        lease_expires_at: new Date(Date.now() + 4 * 60 * 1000).toISOString(),
-        attempts: Number(candidate.attempts || 0) + 1,
-        updated_at: new Date().toISOString(),
-      },
-    )
-    if (claimed[0]) return claimed[0]
-  }
-  return null
+  const rows = await rpc<WorkflowJobRow[]>('xab_v3_claim_workflow_job', {
+    p_worker_id: workerId,
+    p_lease_seconds: 240,
+  })
+  return rows[0] || null
+}
+
+export async function heartbeatFactoryJob(job: WorkflowJobRow) {
+  if (!job.lease_token) throw new Error('Workflow job has no lease token')
+  return rpc<boolean>('xab_v3_heartbeat_workflow_job', {
+    p_job_id: job.id,
+    p_lease_token: job.lease_token,
+    p_lease_seconds: 240,
+  })
+}
+
+async function finishFactoryJob(job: WorkflowJobRow, succeeded: boolean, result?: JsonRecord, error?: string) {
+  if (!job.lease_token) throw new Error('Workflow job has no lease token')
+  const rows = await rpc<WorkflowJobRow[]>('xab_v3_finish_workflow_job', {
+    p_job_id: job.id,
+    p_lease_token: job.lease_token,
+    p_succeeded: succeeded,
+    p_result: result || null,
+    p_error: error || null,
+    p_retry_delay_seconds: 30,
+  })
+  if (!rows[0]) throw new Error('Workflow job finish returned no record')
+  return rows[0]
 }
 
 export async function processFactoryJob(job: WorkflowJobRow) {
@@ -489,26 +492,21 @@ export async function processFactoryJob(job: WorkflowJobRow) {
   else if (job.type === 'build_final_system') result = await startFinalBuild(project)
   else if (job.type === 'monitor_final_build') result = await monitorFinalBuild(project, job.payload || {})
   else throw new Error(`Unsupported workflow job ${job.type}`)
-  await db(`xab_v3_workflow_jobs?id=eq.${enc(job.id)}`, 'PATCH', {
-    state: 'completed',
-    result,
-    lease_owner: null,
-    lease_expires_at: null,
-    last_error: null,
-    updated_at: new Date().toISOString(),
-  })
+  await finishFactoryJob(job, true, result)
   return result
 }
 
 export async function failFactoryJob(job: WorkflowJobRow, error: string) {
-  const terminal = Number(job.attempts || 0) >= Number(job.max_attempts || 3)
-  await db(`xab_v3_workflow_jobs?id=eq.${enc(job.id)}`, 'PATCH', {
-    state: terminal ? 'failed' : 'queued',
-    lease_owner: null,
-    lease_expires_at: null,
-    last_error: error.slice(0, 1200),
-    updated_at: new Date().toISOString(),
-  })
+  const finished = await finishFactoryJob(job, false, undefined, error.slice(0, 1200))
+  const terminal = finished.state === 'failed'
   if (terminal) await patchProject(job.project_id, { status: 'failed' })
-  await receipt(job.project_id, 'workflow_job_failed', false, { job_id: job.id, type: job.type, terminal, error: error.slice(0, 1200) })
+  await receipt(job.project_id, 'workflow_job_failed', false, {
+    job_id: job.id,
+    type: job.type,
+    terminal,
+    attempts: finished.attempts,
+    max_attempts: finished.max_attempts,
+    dead_lettered_at: finished.dead_lettered_at,
+    error: error.slice(0, 1200),
+  })
 }
