@@ -114,11 +114,12 @@ export function runResilienceCycle(faults: FaultInput[], cycleId = 'cycle-1'): R
 }
 
 export function getResilienceSnapshot() {
+  const isProduction = process.env.VERCEL_ENV === 'production'
   return {
     missionId: 'UASF-V7-20260726-001',
     system: 'XAB Resilience OS',
-    environment: process.env.VERCEL_ENV || 'development',
-    productionLocked: process.env.VERCEL_ENV !== 'production',
+    environment: isProduction ? 'PRODUCTION' : 'PREVIEW_ONLY',
+    productionLocked: !isProduction,
     sourceTruth: {
       workbook: 'GOLDEN_UNIVERSAL_PROJECT_FACTORY_ALL_IN_ONE_CEILING_V7_MASTER.xlsx',
       workbookSha256: '1980bc524a15a5c84a9dd596aaf726f869a7bd7dc7327b81d51968099662de5c',
