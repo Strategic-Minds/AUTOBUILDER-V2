@@ -1,0 +1,29 @@
+{
+  "status": "PASS WITH WARNINGS",
+  "validated_at": "2026-07-26T02:15:00Z",
+  "workbook_id": "GUPF-V7-MASTER",
+  "workbook_sha256": "1980bc524a15a5c84a9dd596aaf726f869a7bd7dc7327b81d51968099662de5c",
+  "drive_file_id": "1dI9te-lQ5hbbKWqMxnxrnjIz-ag1afI4",
+  "drive_parent_id": "1VKWeEgaNv-azUmcI0n2Pk-wyjHu3S4f9",
+  "base44_app_id": "6a4ae522852a5e08bfa42450",
+  "base44_project_record_id": "6a656b8c88e986fbda449f60",
+  "project_id": "PILOT-PHX-EPOXY-PROS-20260725",
+  "repository": "Strategic-Minds/AUTOBUILDER-V2",
+  "branch": "auto-builder/install-golden-universal-project-factory-v7-workbook",
+  "checks": {
+    "workbook_local_hash_verified": true,
+    "workbook_drive_upload_verified": true,
+    "drive_parent_verified": true,
+    "base44_project_registered": true,
+    "base44_artifact_registered": true,
+    "manifest_created": true,
+    "controller_created": true,
+    "pilot_manifest_created": true,
+    "handoff_created": true,
+    "rollback_created": true,
+    "binary_committed_to_repo": false,
+    "production_changed": false
+  },
+  "warning": "The 13 MB XLSX binary is stored in the connected Drive source-truth folder rather than committed to GitHub. The repo contains a verified controller, hash, file ID, and URL.",
+  "next_gate": "create governed dry-run job packet and execute a branch-only Preview pilot"
+}
