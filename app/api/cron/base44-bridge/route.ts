@@ -7,7 +7,7 @@ export const maxDuration = 60
 const EXPECTED_SCHEDULE = '*/5 * * * *'
 const DEFAULT_BASE44_AGENT_URL = 'https://app.base44.com/api/agents/6a4ae522852a5e08bfa42450'
 type JsonRecord = Record<string, unknown>
-type Job = { id: string; job_key: string; project_id: string | null; message: string; source: string; context: JsonRecord; attempts: number; max_attempts: number; lease_owner: string }
+type Job = { id: string; job_key: string; project_id: string | null; state: string; message: string; source: string; context: JsonRecord; attempts: number; max_attempts: number; lease_owner: string }
 
 function config() {
   const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '')
