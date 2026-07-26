@@ -70,7 +70,8 @@ export async function POST(req: NextRequest) {
           state: 'BLOCKED_BASE44_CREDENTIAL_REQUIRED',
           error: 'Base44 outbound credential is not configured',
           missing_environment_variables: ['BASE44_SERVICE_TOKEN'],
-          production_locked: true,
+          production_target: true,
+          production_locked_until_gates_pass: true,
         },
         { status: 503 },
       )
@@ -95,8 +96,9 @@ export async function POST(req: NextRequest) {
           context,
           correlation_id: correlationId,
           idempotency_key: idempotencyKey,
-          production_target: false,
-          production_locked: true,
+          production_target: true,
+          automatic_production_after_gates: true,
+          production_locked_until_gates_pass: true,
         },
       }),
       signal: AbortSignal.timeout(55_000),
@@ -113,7 +115,8 @@ export async function POST(req: NextRequest) {
           status: agentRes.status,
           detail: responseText.slice(0, 500),
           correlation_id: correlationId,
-          production_locked: true,
+          production_target: true,
+          production_locked_until_gates_pass: true,
         },
         { status: 502 },
       )
@@ -128,13 +131,23 @@ export async function POST(req: NextRequest) {
       source: 'base44-superagent',
       correlation_id: correlationId,
       idempotency_key: idempotencyKey,
-      production_target: false,
-      production_locked: true,
+      production_target: true,
+      automatic_production_after_gates: true,
+      production_locked_until_gates_pass: true,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error)
-    return NextResponse.json({ ok: false, state: 'BRIDGE_ERROR', error: detail, production_locked: true }, { status: 500 })
+    return NextResponse.json(
+      {
+        ok: false,
+        state: 'BRIDGE_ERROR',
+        error: detail,
+        production_target: true,
+        production_locked_until_gates_pass: true,
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -147,8 +160,9 @@ export async function GET() {
     outbound_base44_configured: Boolean(outboundToken),
     inbound_bridge_configured: Boolean(inboundToken || process.env.CRON_SECRET),
     agent_id: '6a4ae522852a5e08bfa42450',
-    production_target: false,
-    production_locked: true,
+    production_target: true,
+    automatic_production_after_gates: true,
+    production_locked_until_gates_pass: true,
     usage: {
       method: 'POST',
       authentication: 'Bearer AUTO_BUILDER_BRIDGE_TOKEN or CRON_SECRET',
