@@ -53,14 +53,14 @@ Receipt ID: `REC-UASF-V7-20260726-001`
 
 ## Selected system
 
-`XAB Resilience OS`
+`Xtreme AI Builder`
 
 ## Next executable work
 
 1. Produce architecture and acceptance contracts.
-2. Implement the Source Truth Sentinel module on the isolated branch.
+2. Implement source-truth verification on the isolated branch.
 3. Implement BrowserWorker validation orchestration.
-4. Implement bounded recursive repair state and receipts.
+4. Implement bounded recursive testing, repair state, and receipts.
 5. Use only new RLS-protected test tables if persistence is required.
 6. Connect a Vercel Preview deployment.
 7. Inject controlled faults, repair, and retest.

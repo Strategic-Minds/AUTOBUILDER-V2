@@ -1,4 +1,4 @@
-# XAB Resilience OS Rollback Plan
+# Xtreme AI Builder Rollback Plan
 
 Mission: `UASF-V7-20260726-001`
 
