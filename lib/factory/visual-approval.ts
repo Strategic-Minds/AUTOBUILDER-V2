@@ -81,6 +81,7 @@ function extFor(contentType: string) {
 async function uploadVisual(projectId: string, sha256: string, contentType: string, bytes: Buffer) {
   const { url, key } = config()
   const path = `visual-contracts/${projectId}/${sha256}.${extFor(contentType)}`
+  const body = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const response = await fetch(`${url}/storage/v1/object/xab-generated-assets/${path}`, {
     method: 'POST',
     headers: {
@@ -90,7 +91,7 @@ async function uploadVisual(projectId: string, sha256: string, contentType: stri
       'x-upsert': 'true',
       'cache-control': '3600',
     },
-    body: bytes,
+    body,
     cache: 'no-store',
   })
   const text = await response.text()
