@@ -1,40 +1,46 @@
-const CACHE_NAME = 'xsb-v1'
+const CACHE_NAME = 'xab-v2'
 const STATIC_ASSETS = [
   '/',
+  '/factory',
   '/dashboard',
-  '/manifest.json',
+  '/manifest.webmanifest',
   '/pwa-icon-192.png',
   '/pwa-icon-512.png',
   '/xps-logo.png',
 ]
 
-// Install — cache static shell
+// Install: cache the application shell. A missing optional asset must not
+// prevent the service worker from installing, so cache entries individually.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        STATIC_ASSETS.map((asset) =>
+          cache.add(asset).catch(() => undefined)
+        )
+      )
+    )
   )
   self.skipWaiting()
 })
 
-// Activate — remove old caches
+// Activate: remove old caches.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
     )
   )
   self.clients.claim()
 })
 
-// Fetch — network-first for API/nav, cache-first for assets
+// Fetch: network-first for pages and APIs, cache-first for static assets.
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
 
-  // Skip non-GET and cross-origin
   if (request.method !== 'GET' || url.origin !== self.location.origin) return
 
-  // Cache-first for static assets (images, fonts, icons)
   if (
     request.destination === 'image' ||
     request.destination === 'font' ||
@@ -55,7 +61,6 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Network-first for pages and API
   event.respondWith(
     fetch(request)
       .then((response) => {
@@ -65,6 +70,6 @@ self.addEventListener('fetch', (event) => {
         }
         return response
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match('/dashboard')))
+      .catch(() => caches.match(request).then((cached) => cached || caches.match('/factory')))
   )
 })

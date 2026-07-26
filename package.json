@@ -1,18 +1,25 @@
 {
   "name": "autobuilder-v2",
+  "__build_timestamp": "2026-07-12T21:42:31.408858Z",
+  "build-timestamp": "2026-07-12T19:17:25.634383",
   "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run validate:release && npm run build:next",
+    "build:next": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "biome lint app components lib packages scripts tests e2e",
+    "lint:release": "biome lint --reporter=github --max-diagnostics=100 app/factory app/api/factory app/api/cron/auto-builder app/api/cron/factory app/api/gpt-bridge lib/factory lib/internal-auth.ts lib/api-auth.ts packages/security scripts/validate-security.ts scripts/validate-migration.mjs tests/unit e2e/critical-journeys.spec.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:unit": "vitest run tests/unit",
     "adapters:run-all": "tsx scripts/run_all_adapters.ts",
-    "scorecard": "tsx scripts/scorecard.ts"
+    "scorecard": "tsx scripts/scorecard.ts",
+    "validate:security": "tsx scripts/validate-security.ts",
+    "validate:migration": "node scripts/validate-migration.mjs",
+    "validate:release": "npm audit --audit-level=high && npm run validate:security && npm run lint:release && npm run test:unit && npx tsc --noEmit && npm run validate:migration && npm run scorecard"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.7",
@@ -45,23 +52,22 @@
     "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.5",
     "@playwright/test": "^1.49.0",
     "@tailwindcss/postcss": "^4.3.2",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/ws": "^8.5.0",
-    "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.21",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "^15.5.22",
     "postcss": "8.5.23",
     "tailwindcss": "^4.3.2",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0",
-    "vitest": "^1.6.0"
+    "vitest": "4.1.10"
   },
   "overrides": {
     "postcss": "8.5.23",
     "sharp": "0.35.3"
-  }
+  },
+  "_build_timestamp": "2026-07-12T21:47:27.982501"
 }

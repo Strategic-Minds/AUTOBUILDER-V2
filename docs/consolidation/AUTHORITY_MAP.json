@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "operator_directive": {
+    "source": "Uploaded XTREME AI BUILDER ONE-REPO FINAL CONSOLIDATION AND GOLDEN-PATH EXECUTION",
+    "authority": "highest_current",
+    "production_locked": true
+  },
+  "canonical": {
+    "platform_repository": "Strategic-Minds/AUTOBUILDER-V2",
+    "branch": "auto-builder/forensic-consolidation-20260725",
+    "pull_request": 31,
+    "vercel_project_id": "prj_YSIPjYnM4KtbsiQsVVLHQ5A3AVWe",
+    "vercel_team_id": "team_aFdds8lsbHMwe2ip4aQdbQ3d",
+    "base44_app_id": "6a4ae522852a5e08bfa42450",
+    "supabase_project_id": "azajysheebfhyzoyplpf",
+    "operator_route": "/factory"
+  },
+  "source_priority": [
+    "current explicit operator directive",
+    "current approved control workbook or visual packet",
+    "live runtime and deployment evidence",
+    "Base44 registries",
+    "canonical GitHub repository",
+    "Google Drive operating records",
+    "handoff receipts",
+    "inference"
+  ],
+  "component_authority": {
+    "operator_experience": "Strategic-Minds/AUTOBUILDER-V2",
+    "database_workflow": "xab_v3_* tables in Supabase project azajysheebfhyzoyplpf",
+    "control_plane_donor": "XTREME-AI-SYSTEMS/factory-control-plane",
+    "runtime_donor": "XTREME-AI-SYSTEMS/factory-runtime",
+    "mcp_connector_donor": "Strategic-Minds/AUTO_BUILDER-V1",
+    "browser_runtime_donor": "Strategic-Minds/BROWSERWORKER",
+    "request_queue_contract_donor": "Strategic-Minds/CHATGPT-AUTONOMOUS-SYSTEM-FACTORY",
+    "intake_donor": "Strategic-Minds/WEBSITE-FACTORY",
+    "project_contract_donor": "Strategic-Minds/WEBSITE-SYSTEM-TEMPLATE",
+    "qa_donors": [
+      "Strategic-Minds/sm-qa-agent",
+      "Strategic-Minds/strategic-minds-test-suite",
+      "Strategic-Minds/PHOENIX-EPOXY-PROS"
+    ]
+  },
+  "runtime_boundaries": {
+    "web": "Vercel preview application",
+    "control_plane": "server-only pipeline transitions and release evaluation",
+    "runtime": "server-only planning, execution and repair coordination",
+    "browserworker": "authenticated separate Vercel deploy target sourced from canonical repository",
+    "supabase": "durable project, approval, workflow, browser and receipt state",
+    "base44": "registry and governed orchestration memory, not canonical code",
+    "drive": "human-readable control packets and evidence mirror, not executable code"
+  },
+  "superseded_claims": [
+    {
+      "source": "Base44 OperatorDecisionRegistry ODR-XAB-PRODUCTION-DEFAULT-20260725",
+      "reason": "The current operator directive explicitly prohibits production promotion during this execution.",
+      "status": "superseded_for_current_run"
+    },
+    {
+      "source": "Base44 ProjectRegistry AB2-2026-0712-001",
+      "reason": "It claims no frontend or preview, while PR #31 and Vercel provide current evidence.",
+      "status": "stale"
+    }
+  ],
+  "protected_actions": [
+    "merge default branch",
+    "production database migration",
+    "production deployment or promotion",
+    "production environment mutation",
+    "DNS or domain changes",
+    "billing or paid service changes",
+    "repository deletion or archive",
+    "customer messaging or publishing"
+  ]
+}

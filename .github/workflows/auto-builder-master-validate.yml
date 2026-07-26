@@ -1,25 +1,61 @@
-{
-  "name": "AUTO_BUILDER Master Validate",
-  "on": {
-    "pull_request": { "branches": ["main", "develop"] },
-    "push": { "branches": ["main"] },
-    "workflow_dispatch": {}
-  },
-  "jobs": {
-    "validate": {
-      "runs-on": "ubuntu-latest",
-      "steps": [
-        { "uses": "actions/checkout@v4" },
-        {
-          "uses": "actions/setup-node@v4",
-          "with": { "node-version": "22", "cache": "npm" }
-        },
-        { "name": "Debug info", "run": "node --version && npm --version" },
-        { "name": "Install dependencies", "run": "npm ci --verbose" },
-        { "name": "TypeScript check", "run": "npx tsc --noEmit --listFiles 2>&1 | head -100" },
-        { "name": "List tsconfig", "run": "cat tsconfig.json" },
-        { "name": "Build", "run": "npm run build --if-present" }
-      ]
-    }
-  }
-}
+name: AUTO_BUILDER Master Validate
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: master-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Install, audit, lint, test, typecheck, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Runtime versions
+        run: node --version && npm --version
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Secret and environment coverage gate
+        run: npm run validate:security
+
+      - name: Release-surface lint
+        run: npm run lint:release
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Verify queue migration and rollback pair
+        run: npm run validate:migration
+
+      - name: Computed enterprise scorecard
+        run: npm run scorecard
+
+      - name: Production build
+        run: npm run build:next

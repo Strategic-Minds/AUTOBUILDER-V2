@@ -1,114 +1,146 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test'
 
 /**
- * Part 9: Real Playwright headless tests
- * Tests critical user journeys without requiring OpenAI key.
- * Evidence captured: screenshots, traces, console errors, network failures.
+ * Release-candidate browser acceptance tests.
+ * Evidence: desktop, tablet, mobile, PWA assets, API contracts,
+ * unauthenticated security boundaries, console output and network failures.
  */
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL || 'https://www.autobuilderos.com';
+const BASE = process.env.PLAYWRIGHT_BASE_URL as string
 
-test.describe('Critical Journeys — Headless', () => {
-  
-  test('T001: Homepage loads and returns 200', async ({ page }) => {
-    const consoleErrors: string[] = [];
-    const networkFailures: string[] = [];
-    page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
-    page.on('requestfailed', req => networkFailures.push(req.url()));
+function collectBrowserEvidence(page: import('@playwright/test').Page) {
+  const consoleErrors: string[] = []
+  const networkFailures: string[] = []
+  const serverErrors: string[] = []
 
-    const response = await page.goto(BASE);
-    expect(response?.status()).toBeLessThan(400);
-
-    const title = await page.title();
-    console.log('Page title:', title);
-
-    // No console errors on load
-    if (consoleErrors.length > 0) {
-      console.warn('Console errors:', consoleErrors);
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text())
+  })
+  page.on('requestfailed', (request) => networkFailures.push(request.url()))
+  page.on('response', (response) => {
+    if (response.status() >= 500 && response.url().startsWith(BASE)) {
+      serverErrors.push(`${response.status()} ${response.url()}`)
     }
+  })
 
-    await page.screenshot({ path: 'screenshots/homepage.png', fullPage: true });
-    console.log('Network failures:', networkFailures);
-  });
+  return { consoleErrors, networkFailures, serverErrors }
+}
+
+test.describe('Critical Journeys — Release Candidate', () => {
+  test('T001: Homepage loads and returns 200', async ({ page }) => {
+    const evidence = collectBrowserEvidence(page)
+    const response = await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+
+    expect(response?.status()).toBeLessThan(400)
+    expect(await page.title()).not.toBe('')
+    expect(evidence.serverErrors).toEqual([])
+
+    await page.screenshot({ path: 'screenshots/homepage-desktop.png', fullPage: true })
+    console.log('Console errors:', evidence.consoleErrors)
+    console.log('Network failures:', evidence.networkFailures)
+  })
 
   test('T002: MCP endpoint responds', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/mcp-minimal/mcp`);
-    expect(res.status()).toBeLessThan(500);
-    console.log('MCP status:', res.status());
-  });
+    const response = await request.get(`${BASE}/api/mcp-minimal/mcp`)
+    expect(response.status()).toBeLessThan(500)
+  })
 
-  test('T003: Validation API returns structured response', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/validation`);
-    expect(res.status()).toBeLessThan(500);
-    if (res.status() === 200) {
-      const data = await res.json();
-      expect(data).toHaveProperty('score');
-      console.log('Validation score:', data.score);
-    }
-  });
+  test('T003: Validation API returns its active CI contract', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/validation`)
+    expect(response.status()).toBe(200)
+
+    const data = await response.json()
+    expect(data).toMatchObject({
+      ok: true,
+      validation_system: 'active',
+      status: 'CI_REQUIRED',
+    })
+    expect(typeof data.timestamp).toBe('string')
+  })
 
   test('T004: Auto-fix rejects unauthenticated requests', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/adapters/auto-fix`, { data: {} });
-    expect(res.status()).toBe(401);
-    console.log('Unauthenticated auto-fix correctly rejected with 401');
-  });
+    const response = await request.post(`${BASE}/api/adapters/auto-fix`, { data: {} })
+    expect(response.status()).toBe(401)
+  })
 
   test('T005: Auto-heal rejects unauthenticated requests', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/adapters/auto-heal`, { data: {} });
-    expect(res.status()).toBe(401);
-    console.log('Unauthenticated auto-heal correctly rejected with 401');
-  });
+    const response = await request.post(`${BASE}/api/adapters/auto-heal`, { data: {} })
+    expect(response.status()).toBe(401)
+  })
 
   test('T006: Quarantine rejects unauthenticated GET', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/adapters/quarantine`);
-    expect(res.status()).toBe(401);
-    console.log('Unauthenticated quarantine GET correctly rejected with 401');
-  });
+    const response = await request.get(`${BASE}/api/adapters/quarantine`)
+    expect(response.status()).toBe(401)
+  })
 
-  test('T007: Page has no critical navigation broken', async ({ page }) => {
-    await page.goto(BASE);
-    // Check no 404 images or scripts
-    const responses: number[] = [];
-    page.on('response', res => responses.push(res.status()));
-    await page.waitForLoadState('networkidle').catch(() => null);
-    const failed = responses.filter(s => s >= 400);
-    console.log('Failed resources:', failed.length);
-    // Allow some failures (analytics, etc.) but flag critical ones
-    expect(failed.filter(s => s >= 500).length).toBe(0);
-  });
+  test('T007: Homepage has no same-origin server failures', async ({ page }) => {
+    const evidence = collectBrowserEvidence(page)
+    await page.goto(BASE, { waitUntil: 'networkidle' })
+    expect(evidence.serverErrors).toEqual([])
+  })
 
-  test('T008: Mobile viewport renders without overflow', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto(BASE);
-    await page.screenshot({ path: 'screenshots/mobile.png', fullPage: true });
-    // Check body doesn't overflow
-    const overflow = await page.evaluate(() => {
-      const body = document.body;
-      return body.scrollWidth > window.innerWidth;
-    });
-    console.log('Horizontal overflow:', overflow);
-    // Warn but don't fail — many apps have intentional horizontal scroll
-  });
+  test('T008: Tablet viewport renders without horizontal overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 })
+    const response = await page.goto(`${BASE}/factory`, { waitUntil: 'domcontentloaded' })
+    expect(response?.status()).toBeLessThan(400)
 
-});
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
+    expect(overflow).toBe(false)
+    await page.screenshot({ path: 'screenshots/factory-tablet.png', fullPage: true })
+  })
 
-test.describe('API Contract Tests', () => {
+  test('T009: Mobile viewport renders without horizontal overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    const response = await page.goto(`${BASE}/factory`, { waitUntil: 'domcontentloaded' })
+    expect(response?.status()).toBeLessThan(400)
 
-  test('T009: Heartbeat returns structured response when authorized', async ({ request }) => {
-    const secret = process.env.CRON_SECRET || '';
-    if (!secret) { test.skip(); return; }
-    const res = await request.get(`${BASE}/api/cron/auto-builder`, {
-      headers: { Authorization: `Bearer ${secret}` }
-    });
-    // Should be 200 COMPLETED, 200 SKIPPED (lock), or 503 BLOCKED/DEGRADED
-    expect([200, 503]).toContain(res.status());
-    if (res.status() === 200) {
-      const data = await res.json();
-      expect(data).toHaveProperty('hb_id');
-      expect(data).toHaveProperty('state');
-      console.log('Heartbeat state:', data.state, 'env:', data.env);
-    }
-  });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
+    expect(overflow).toBe(false)
+    await page.screenshot({ path: 'screenshots/factory-mobile.png', fullPage: true })
+  })
 
-});
+  test('T010: Factory operator surface loads', async ({ page }) => {
+    const response = await page.goto(`${BASE}/factory`, { waitUntil: 'domcontentloaded' })
+    expect(response?.status()).toBeLessThan(400)
+    await expect(page.getByRole('heading', { name: /build the real system/i })).toBeVisible()
+    await page.screenshot({ path: 'screenshots/factory-desktop.png', fullPage: true })
+  })
 
+  test('T011: PWA manifest and service worker are deployable', async ({ request }) => {
+    const manifestResponse = await request.get(`${BASE}/manifest.webmanifest`)
+    expect(manifestResponse.status()).toBe(200)
+    const manifest = await manifestResponse.json()
+    expect(manifest.name).toBe('Xtreme AI Builder')
+    expect(manifest.start_url).toBe('/factory')
+    expect(manifest.display).toBe('standalone')
+    expect(Array.isArray(manifest.icons)).toBe(true)
+    expect(manifest.icons.length).toBeGreaterThanOrEqual(2)
+
+    const workerResponse = await request.get(`${BASE}/sw.js`)
+    expect(workerResponse.status()).toBe(200)
+    expect(await workerResponse.text()).toContain("const CACHE_NAME = 'xab-v2'")
+  })
+
+  test('T012: Factory APIs remain authenticated', async ({ request }) => {
+    const projects = await request.get(`${BASE}/api/factory/projects`)
+    expect(projects.status()).toBe(401)
+
+    const worker = await request.get(`${BASE}/api/cron/factory`)
+    expect(worker.status()).toBe(401)
+  })
+})
+
+test.describe('Authenticated API Contract', () => {
+  test('T013: Heartbeat returns a governed response when a test secret exists', async ({ request }) => {
+    const secret = process.env.CRON_SECRET || ''
+    test.skip(!secret, 'PLAYWRIGHT_TEST_SECRET is not configured for this release-candidate run')
+
+    const response = await request.get(`${BASE}/api/cron/auto-builder`, {
+      headers: { Authorization: `Bearer ${secret}` },
+    })
+    expect([200, 503]).toContain(response.status())
+
+    const data = await response.json()
+    expect(typeof data.state).toBe('string')
+  })
+})

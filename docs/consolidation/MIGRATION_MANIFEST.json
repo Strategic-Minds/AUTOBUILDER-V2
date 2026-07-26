@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "canonical_repository": "Strategic-Minds/AUTOBUILDER-V2",
+  "canonical_branch": "auto-builder/forensic-consolidation-20260725",
+  "status": "IN_PROGRESS_PREVIEW_ONLY",
+  "imports": [
+    {
+      "capability": "dependency_lock_synchronization",
+      "source": "canonical package.json",
+      "destination": "package-lock.json",
+      "source_commit": "2277320312ef3aa2379f2d6c38877b5893875c31",
+      "installed_commit": "67143d9380f9e0af045ec9b99d7bfc300fbf6551",
+      "validation": "npm ci advanced from failure to success; master validation passed on later head",
+      "rollback": "revert installed commit",
+      "status": "VERIFIED"
+    },
+    {
+      "capability": "preview_browser_binding",
+      "source": "Vercel branch alias metadata",
+      "destination": ".github/workflows/playwright.yml",
+      "installed_commit": "48d1c835c88d1fce4a7539953c985f2d6f28702d",
+      "validation": "workflow rejects empty and production targets and reaches real browser tests",
+      "rollback": "revert workflow commit",
+      "status": "VERIFIED"
+    },
+    {
+      "capability": "pwa_manifest",
+      "source": "existing canonical PWA assets and website system contract",
+      "destination": "app/manifest.ts",
+      "installed_commit": "826441361498fd3d2c9294dc050080b2c8c4db30",
+      "validation": "preview build and Playwright PWA test pending final head",
+      "rollback": "revert manifest commits",
+      "status": "VALIDATION_PENDING"
+    },
+    {
+      "capability": "pwa_service_worker",
+      "source": "existing canonical service worker",
+      "destination": "public/sw.js",
+      "installed_commit": "6c7954e60f46f4f5a6884347cbc16c3deaceef2e",
+      "validation": "manifest route corrected to /manifest.webmanifest; preview validation pending final head",
+      "rollback": "revert service-worker commit",
+      "status": "VALIDATION_PENDING"
+    },
+    {
+      "capability": "responsive_browser_acceptance",
+      "source": "playwright-chromium-validation standard plus current preview contracts",
+      "destination": "e2e/critical-journeys.spec.ts",
+      "installed_commit": "4d03290023672cf183af6f05856a28c8f2bf7a9a",
+      "validation": "desktop, tablet, mobile, factory, PWA, API and auth checks installed; final run pending",
+      "rollback": "revert test commit",
+      "status": "VALIDATION_PENDING"
+    }
+  ],
+  "planned_imports": [
+    {
+      "capability": "pipeline_state_and_release_gate",
+      "source_repository": "XTREME-AI-SYSTEMS/factory-control-plane",
+      "source_files": ["src/pipeline-state.mjs", "src/release-gate.mjs"],
+      "destination": "packages/core and packages/governance",
+      "schema_import_allowed": false,
+      "status": "PLANNED"
+    },
+    {
+      "capability": "planner_and_runtime_contracts",
+      "source_repository": "XTREME-AI-SYSTEMS/factory-runtime",
+      "destination": "packages/core and packages/generation",
+      "schema_import_allowed": false,
+      "status": "PLANNED"
+    },
+    {
+      "capability": "brand_and_web_pack_contracts",
+      "source_repository": "Strategic-Minds/CHATGPT-AUTONOMOUS-SYSTEM-FACTORY",
+      "source_files": ["src/brand-pack-engine.mjs", "src/web-pack-engine.mjs"],
+      "destination": "packages/project-contracts",
+      "schema_import_allowed": false,
+      "status": "PLANNED"
+    },
+    {
+      "capability": "queue_leases_and_atomic_claims",
+      "source_repository": "Strategic-Minds/CHATGPT-AUTONOMOUS-SYSTEM-FACTORY",
+      "destination": "supabase migrations and lib/factory",
+      "required_constraint": "adapt to xab_v3_workflow_jobs; do not create uasf_* tables",
+      "status": "PLANNED_PROTECTED_DATABASE_VALIDATION"
+    },
+    {
+      "capability": "real_mcp_execution",
+      "source_repository": "Strategic-Minds/AUTO_BUILDER-V1",
+      "destination": "packages/connectors and lib/factory",
+      "required_constraint": "no manual_receipt success path",
+      "status": "BLOCKED_ON_PREVIEW_BINDING_AND_ADAPTER_EVIDENCE"
+    },
+    {
+      "capability": "browserworker",
+      "source_repository": "Strategic-Minds/BROWSERWORKER",
+      "destination": "apps/browserworker and packages/connectors/browserworker",
+      "status": "PLANNED"
+    }
+  ],
+  "prohibited_imports": [
+    "uasf_* database tables",
+    "parallel autonomous_builds or factory_jobs table families",
+    "production credentials",
+    "customer-specific product code",
+    "manual_receipt as completed execution",
+    "stale README authority claims"
+  ]
+}

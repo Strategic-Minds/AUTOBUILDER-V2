@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-07-26T02:59:25.665Z",
+  "lockfile_sha256": "bebb2c9fc5601f7b1961f50d90743d165d7742583d1ba0790590e9a76d01f7d8",
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencies": {
+      "prod": 148,
+      "dev": 157,
+      "optional": 129,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 342
+    }
+  },
+  "vulnerabilities": []
+}
