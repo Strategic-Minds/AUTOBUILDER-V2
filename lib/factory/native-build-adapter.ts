@@ -397,7 +397,17 @@ async function runBrowserValidation(previewUrl: string, width: number, height: n
     signal: AbortSignal.timeout(50_000),
   })
   const result = await jsonResponse<JsonRecord>(response, `BrowserWorker ${label}`)
-  return { label, width, height, ...result }
+  return {
+    ...result,
+    label,
+    width,
+    height,
+    ok: result.ok === true,
+    status: typeof result.status === 'string' ? result.status : 'fail',
+    artifacts: result.artifacts && typeof result.artifacts === 'object'
+      ? result.artifacts as JsonRecord
+      : {},
+  }
 }
 
 export async function monitorNativeBuild(input: NativeBuildMonitorInput): Promise<NativeBuildMonitorResult> {
