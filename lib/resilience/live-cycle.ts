@@ -11,14 +11,16 @@ const VIEWPORTS: Viewport[] = [
   { label: 'mobile', width: 390, height: 844 },
 ]
 
+const CANONICAL_BROWSER_WORKER_URL = 'https://browserworker-git-main-strategic-minds-advisory.vercel.app'
+
 function workerConfig() {
-  const url = (process.env.BROWSER_WORKER_URL || '').replace(/\/$/, '')
+  const url = (process.env.BROWSER_WORKER_URL || CANONICAL_BROWSER_WORKER_URL).replace(/\/$/, '')
   const secret = process.env.AUTO_BUILDER_OPERATOR_TOKEN
     || process.env.AUTO_BUILDER_BRIDGE_TOKEN
     || process.env.AGENT_OPERATOR_TOKEN
     || process.env.BROWSER_WORKER_SECRET
     || ''
-  if (!url || !secret) throw new Error('BrowserWorker is not configured')
+  if (!secret) throw new Error('BrowserWorker authentication is not configured')
   return { url, secret }
 }
 
@@ -41,7 +43,7 @@ async function runViewport(runId: string, targetUrl: string, viewport: Viewport)
     type: 'generated-site-validation',
     job_id: externalJobId,
     correlation_id: runId,
-    objective: `Validate ${targetUrl}/resilience. Confirm the page loads, the main heading and production lock are visible, the recursive cycle button is usable, there is no horizontal overflow, console and network errors are captured, accessibility evidence is captured, and a retrievable screenshot is returned for ${viewport.label}.`,
+    objective: `Validate ${targetUrl}/resilience. Confirm the page loads, the main heading and production state are visible, the recursive cycle button is usable, there is no horizontal overflow, console and network errors are captured, accessibility evidence is captured, and a retrievable screenshot is returned for ${viewport.label}.`,
     url: `${targetUrl.replace(/\/$/, '')}/resilience`,
     viewport: { width: viewport.width, height: viewport.height, deviceScaleFactor: 1 },
     timeout_ms: 90_000,
