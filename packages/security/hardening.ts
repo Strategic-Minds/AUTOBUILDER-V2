@@ -1,8 +1,9 @@
-import { readdir, readFile } from 'fs/promises'
-import path from 'path'
+import type { Dirent } from 'node:fs'
+import { readdir, readFile } from 'node:fs/promises'
+import path from 'node:path'
 
 const SECRET_PATTERNS: { name: string; re: RegExp }[] = [
-  { name: 'generic_api_key', re: /(?:api[_-]?key|secret|token)\s*[:=]\s*['"][A-Za-z0-9_\-]{20,}['"]/i },
+  { name: 'generic_api_key', re: /(?:api[_-]?key|secret|token)\s*[:=]\s*['"][A-Za-z0-9_-]{20,}['"]/i },
   { name: 'aws_access_key', re: /AKIA[0-9A-Z]{16}/ },
   { name: 'private_key_block', re: /-----BEGIN (RSA |EC )?PRIVATE KEY-----/ },
   { name: 'stripe_live_key', re: /sk_live_[0-9a-zA-Z]{20,}/ },
@@ -45,7 +46,7 @@ export async function scanForSecrets(rootDir: string): Promise<SecretFinding[]> 
   const findings: SecretFinding[] = []
 
   async function walk(dir: string) {
-    let entries
+    let entries: Dirent[]
     try {
       entries = await readdir(dir, { withFileTypes: true })
     } catch {
@@ -84,7 +85,7 @@ export async function checkEnvCoverage(rootDir: string): Promise<{ referenced: s
   const referenced = new Set<string>()
 
   async function walk(dir: string) {
-    let entries
+    let entries: Dirent[]
     try {
       entries = await readdir(dir, { withFileTypes: true })
     } catch {
@@ -98,7 +99,7 @@ export async function checkEnvCoverage(rootDir: string): Promise<{ referenced: s
       let content: string
       try { content = await readFile(full, 'utf8') } catch { continue }
       const matches = content.matchAll(/process\.env\.([A-Z0-9_]+)/g)
-      for (const m of matches) referenced.add(m[1])
+      for (const match of matches) referenced.add(match[1])
     }
   }
   await walk(rootDir)
@@ -109,10 +110,10 @@ export async function checkEnvCoverage(rootDir: string): Promise<{ referenced: s
   } catch {
     /* file may not exist */
   }
-  const documented = new Set([...exampleContent.matchAll(/^([A-Z0-9_]+)=/gm)].map((m) => m[1]))
+  const documented = new Set([...exampleContent.matchAll(/^([A-Z0-9_]+)=/gm)].map((match) => match[1]))
 
   const referencedArr = [...referenced].sort()
-  const missing = referencedArr.filter((r) => !documented.has(r))
+  const missing = referencedArr.filter((name) => !documented.has(name))
 
   return { referenced: referencedArr, documented: [...documented].sort(), missing }
 }
