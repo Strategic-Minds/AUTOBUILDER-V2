@@ -1,0 +1,28 @@
+begin;
+
+update public.xab_v3_workflow_jobs
+set state = case
+  when state = 'xab_queued' then 'queued'
+  when state = 'xab_running' then 'running'
+  else state
+end
+where state in ('xab_queued','xab_running');
+
+alter table public.xab_v3_workflow_jobs
+  drop constraint if exists xab_v3_workflow_jobs_state_check;
+
+alter table public.xab_v3_workflow_jobs
+  add constraint xab_v3_workflow_jobs_state_check
+  check (state in (
+    'queued','running','waiting_for_approval','completed','failed','cancelled',
+    'WEB_PACK_RECEIVED','WEB_PACK_VALIDATED','GENERATION_PLANNED','SOURCE_GENERATED','SOURCE_VALIDATED',
+    'GITHUB_BRANCH_CREATED','PREVIEW_DEPLOYMENT_REQUESTED','PREVIEW_READY','BROWSER_VALIDATION_RUNNING',
+    'VISUAL_COMPARISON_RUNNING','FUNCTIONAL_VALIDATION_RUNNING','DIAGNOSIS_CREATED','REPAIR_APPLIED',
+    'PREVIEW_REDEPLOYED','VALIDATED_PREVIEW','AWAITING_PRODUCTION_APPROVAL','PRODUCTION_PROMOTION_REQUESTED',
+    'PRODUCTION_SMOKE_TEST_RUNNING','PRODUCTION_VALIDATED','PRODUCTION_ROLLED_BACK',
+    'BLOCKED_INVALID_WEB_PACK','BLOCKED_MISSING_ENVIRONMENT','GENERATION_FAILED','BUILD_FAILED',
+    'DEPLOYMENT_FAILED','BROWSER_VALIDATION_FAILED','VISUAL_PARITY_FAILED','FUNCTIONAL_PARITY_FAILED',
+    'REPAIR_FAILED','FIVE_CYCLE_LIMIT_REACHED','NEEDS_OPERATOR_REVIEW'
+  ));
+
+commit;
