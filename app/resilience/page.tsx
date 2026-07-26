@@ -31,7 +31,7 @@ export default function ResiliencePage() {
   async function refresh() {
     const response = await fetch('/api/resilience/status', { cache: 'no-store' })
     const data = await response.json()
-    if (!response.ok) throw new Error(data.error || 'Unable to load resilience status')
+    if (!response.ok) throw new Error(data.error || 'Unable to load validation status')
     setSnapshot(data.snapshot)
     setRun(data.latestRun || null)
   }
@@ -72,7 +72,7 @@ export default function ResiliencePage() {
           <div className="grid gap-8 p-7 md:p-10 lg:grid-cols-[1fr_420px] lg:p-12">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#d4af37]">Autonomous Reliability Control Plane</p>
-              <h1 className="mt-4 text-4xl font-semibold tracking-[-0.045em] md:text-6xl">XAB Resilience OS</h1>
+              <h1 className="mt-4 text-4xl font-semibold tracking-[-0.045em] md:text-6xl">Xtreme AI Builder</h1>
               <p className="mt-5 max-w-3xl text-base leading-7 text-zinc-300 md:text-lg">Run real BrowserWorker validation across desktop, tablet, and mobile, persist every receipt, and keep release decisions fail-closed.</p>
               <div className="mt-7 flex flex-wrap gap-3 text-sm">
                 <span className="rounded-full border border-[#d4af37]/50 bg-[#d4af37]/10 px-4 py-2 text-[#f4d66d]">Mission {snapshot?.missionId || 'loading'}</span>
@@ -83,9 +83,9 @@ export default function ResiliencePage() {
             <div className="rounded-3xl border border-zinc-700 bg-zinc-900/90 p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Live validation</p>
               <p className="mt-3 text-2xl font-semibold">Audit → Execute → Persist → Decide</p>
-              <p className="mt-3 text-sm leading-6 text-zinc-400">This launches the authenticated BrowserWorker mesh and records the exact run in the isolated RLS runtime.</p>
+              <p className="mt-3 text-sm leading-6 text-zinc-400">This launches authenticated BrowserWorker validation and records the exact run in the isolated RLS runtime.</p>
               <button type="button" onClick={runLiveCycle} disabled={busy} className="mt-6 w-full rounded-2xl bg-[#d4af37] px-5 py-4 font-semibold text-black transition hover:bg-[#e2c55d] disabled:cursor-wait disabled:opacity-60">
-                {busy ? 'Running live validation…' : 'Run live resilience cycle'}
+                {busy ? 'Running live validation…' : 'Run live validation cycle'}
               </button>
             </div>
           </div>
