@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "mission_id": "UASF-V7-20260726-001",
+  "title": "XAB Universal Autonomous System Discovery and Preview Build",
+  "status": "DISCOVERY_ACTIVE",
+  "environment": "PREVIEW_ONLY",
+  "operator_instruction": "Autonomously discover, select, build, test, repair, harden, and deliver the best system using Google Drive, GitHub, Vercel, Supabase, BrowserWorker, and Xtreme AI Builder.",
+  "source_truth": {
+    "workbook_name": "GOLDEN_UNIVERSAL_PROJECT_FACTORY_ALL_IN_ONE_CEILING_V7_MASTER.xlsx",
+    "workbook_drive_file_id": "1dI9te-lQ5hbbKWqMxnxrnjIz-ag1afI4",
+    "workbook_control_copy_id": "1V9F-_nJnxgm5IDFfzD1-V-miVWazWKQB",
+    "workbook_sha256": "1980bc524a15a5c84a9dd596aaf726f869a7bd7dc7327b81d51968099662de5c",
+    "sheet_count": 288
+  },
+  "drive": {
+    "mission_folder_id": "1SiaZCj2xFq4gOIh8ZW2pleas-BzMA-tk",
+    "source_truth_folder_id": "1EzbgOrnVsQmIFnLpEDWxDalmx_p1vH9e",
+    "discovery_folder_id": "1XqoLYH_vvdIlXmkIWk1hOZ1weKHb3YsD",
+    "implementation_folder_id": "1w5B0_OfYsFM7SVe1q7p1OMdtNnd_Amil",
+    "validation_folder_id": "1FYmeaQSWTowEJXgeOq9LXQkY7v_i_7Ni",
+    "receipts_folder_id": "19_G7ciBkatusT2aGE6wFbj6YYodHFRPR",
+    "delivery_folder_id": "1H3vsobEfivCMhkKGT84sIpBTgPLkTl9T"
+  },
+  "github": {
+    "control_repository": "Strategic-Minds/AUTOBUILDER-V2",
+    "authority_candidate_repository": "Strategic-Minds/XAB",
+    "browser_repository": "Strategic-Minds/BROWSERWORKER",
+    "branch": "auto-builder/uasf-v7-autonomous-discovery-20260726",
+    "default_branch_untouched": true
+  },
+  "vercel": {
+    "team_id": "team_aFdds8lsbHMwe2ip4aQdbQ3d",
+    "control_project_id": "prj_qaUnGOL4MmPvm11Hqxp9Cn0YDfmv",
+    "browserworker_project_id": "prj_XLXGylKrFpIGK7GVGpeSfWwV7qzo",
+    "preview_required": true,
+    "production_locked": true
+  },
+  "supabase": {
+    "project_id": "azajysheebfhyzoyplpf",
+    "project_name": "supabase-blue-zebra",
+    "status": "ACTIVE_HEALTHY_WITH_CRITICAL_SECURITY_FINDINGS",
+    "test_policy": "Use only new namespaced tables with RLS and least-privilege policies. Do not mutate legacy tables without a separate approved remediation plan."
+  },
+  "xtreme_ai_builder": {
+    "service": "xps-ai-factory-control-plane",
+    "health": "ok",
+    "universal_job_id": "JOB-UASF-V7-AUTONOMOUS-DISCOVERY-20260726-001",
+    "universal_job_receipt_id": "receipt_1785045477262",
+    "universal_adapter_status": "NOT_IMPLEMENTED_FALLBACK_REQUIRED"
+  },
+  "protected_actions": [
+    "default branch merge",
+    "production deployment",
+    "production alias promotion",
+    "production database mutation",
+    "secret creation or replacement",
+    "paid resource creation",
+    "domain or DNS changes",
+    "customer messaging",
+    "destructive deletion"
+  ],
+  "next_gate": "SELECT_SYSTEM_AND_CREATE_IMPLEMENTATION_PACKET"
+}
