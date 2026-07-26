@@ -1,0 +1,54 @@
+name: Resolve main drift into consolidation branch
+
+on:
+  push:
+    branches:
+      - auto-builder/forensic-consolidation-20260725
+    paths:
+      - .github/workflows/resolve-main-drift.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: auto-builder/forensic-consolidation-20260725
+          fetch-depth: 0
+
+      - name: Merge main while retaining canonical preview governance
+        shell: bash
+        run: |
+          set -e
+          BRANCH='auto-builder/forensic-consolidation-20260725'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main "$BRANCH"
+          git reset --hard "origin/$BRANCH"
+
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo 'Main is already contained in the consolidation branch.'
+            exit 0
+          fi
+
+          git merge --no-commit --no-ff origin/main || true
+
+          # The active operator directive keeps production locked and requires
+          # one canonical XAB queue. Resolve these files to the branch version.
+          git checkout --ours -- app/api/gpt-bridge/route.ts vercel.json
+          git rm -f --ignore-unmatch app/api/cron/base44-bridge/route.ts
+          git add app/api/gpt-bridge/route.ts vercel.json
+
+          if git diff --name-only --diff-filter=U | grep -q .; then
+            echo 'Unexpected unresolved conflicts:'
+            git diff --name-only --diff-filter=U
+            exit 1
+          fi
+
+          git commit -m 'merge(main): absorb history while preserving preview governance'
+          git push origin "HEAD:$BRANCH"
