@@ -5,17 +5,23 @@ function isRecord(value: unknown): value is JsonRecord {
 }
 
 export function sanitizeVercelDeploymentBody(value: unknown): unknown {
-  if (!isRecord(value) || !isRecord(value.meta)) return value
+  if (!isRecord(value)) return value
 
-  const meta = Object.fromEntries(
-    Object.entries(value.meta).filter(([, entry]) => {
-      if (entry === null || entry === undefined) return false
-      if (typeof entry === 'string') return entry.trim().length > 0
-      return true
-    }),
-  )
+  const sanitized: JsonRecord = { ...value }
 
-  return { ...value, meta }
+  if (sanitized.target === 'preview') delete sanitized.target
+
+  if (isRecord(sanitized.meta)) {
+    sanitized.meta = Object.fromEntries(
+      Object.entries(sanitized.meta).filter(([, entry]) => {
+        if (entry === null || entry === undefined) return false
+        if (typeof entry === 'string') return entry.trim().length > 0
+        return true
+      }),
+    )
+  }
+
+  return sanitized
 }
 
 export function isVercelDeploymentRequest(url: string, method?: string) {
