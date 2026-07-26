@@ -25,7 +25,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Write sanitized current audit
+      - name: Write sanitized current audit from Biome lockfile
         shell: bash
         run: |
           mkdir -p docs/receipts/validation
@@ -53,6 +53,7 @@ jobs:
           }))
           fs.writeFileSync('docs/receipts/validation/NPM_AUDIT_CURRENT.json', JSON.stringify({
             generated_at: new Date().toISOString(),
+            lockfile_sha256: require('crypto').createHash('sha256').update(fs.readFileSync('package-lock.json')).digest('hex'),
             metadata: input.metadata || {},
             vulnerabilities,
           }, null, 2) + '\n')
@@ -63,5 +64,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/receipts/validation/NPM_AUDIT_CURRENT.json
-          git commit -m "docs(validation): refresh current npm audit receipt"
+          git commit -m "docs(validation): refresh audit after Biome migration"
           git push origin HEAD:auto-builder/forensic-consolidation-20260725
