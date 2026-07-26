@@ -1,4 +1,5 @@
 import { monitorNativeBuild, startNativeBuild } from './native-build-adapter'
+import { buildBrandOptions, buildWebsiteOptions } from './pack-generator'
 
 type JsonRecord = Record<string, unknown>
 
@@ -342,55 +343,38 @@ async function selectedOption(projectId: string, kind: 'logo' | 'website') {
 }
 
 async function generateBrandOptions(project: ProjectRow) {
-  let providerOutput: JsonRecord | null = null
-  try {
-    providerOutput = await callMcp('run_swarm', {
-      job_id: `brand:${project.id}`,
-      mission: `Create exactly three distinct brand pack specifications for ${project.client_name}, a ${project.industry} business in ${project.region}. Return structured, implementation-ready directions for logo, palette, typography, imagery, messaging, and brand voice. Do not deploy or publish.`,
-      mode: 'execute',
-      requested_outputs: ['three_brand_packs'],
-      production_mutation: false,
-    })
-  } catch (error) {
-    providerOutput = { fallback: true, reason: error instanceof Error ? error.message : String(error) }
-  }
-  const options = fallbackBrandOptions(project).map((option) => ({
+  const options = buildBrandOptions(project).map((option) => ({
     project_id: project.id,
     ...option,
-    config: { ...option.config, provider_output: providerOutput },
+    config: { ...option.config, generation_mode: 'deterministic_complete_pack_v1' },
   }))
   await db('xab_v3_logo_options?on_conflict=project_id,option_number', 'POST', options, 'resolution=merge-duplicates,return=representation')
   await ensureApproval(project.id, 'logo')
   await patchProject(project.id, { status: 'waiting_for_approval' })
-  await receipt(project.id, 'brand_options_generated', true, { options: 3, provider_output: providerOutput })
-  return { options: 3 }
+  await receipt(project.id, 'brand_options_generated', true, {
+    options: 3,
+    generation_mode: 'deterministic_complete_pack_v1',
+    required_fields: ['marks', 'palette', 'typography', 'imagery', 'messaging', 'voice', 'slogans', 'desktop_usage', 'mobile_usage'],
+  })
+  return { options: 3, generation_mode: 'deterministic_complete_pack_v1' }
 }
 
 async function generateWebsiteOptions(project: ProjectRow) {
   const logo = await selectedOption(project.id, 'logo')
-  let providerOutput: JsonRecord | null = null
-  try {
-    providerOutput = await callMcp('run_swarm', {
-      job_id: `website-options:${project.id}`,
-      mission: `Create exactly three distinct website packs for ${project.client_name}. Use the approved brand direction provided in the payload. Each pack must define homepage structure, funnel, responsive behavior, content direction, calls to action, trust proof, and application requirements. Do not deploy or publish.`,
-      mode: 'execute',
-      approved_brand: logo,
-      requested_outputs: ['three_website_packs'],
-      production_mutation: false,
-    })
-  } catch (error) {
-    providerOutput = { fallback: true, reason: error instanceof Error ? error.message : String(error) }
-  }
-  const options = fallbackWebsiteOptions(project).map((option) => ({
+  const options = buildWebsiteOptions(project, logo).map((option) => ({
     project_id: project.id,
     ...option,
-    config: { ...option.config, approved_brand: logo, provider_output: providerOutput },
+    config: { ...option.config, generation_mode: 'deterministic_complete_pack_v1' },
   }))
   await db('xab_v3_website_options?on_conflict=project_id,option_number', 'POST', options, 'resolution=merge-duplicates,return=representation')
   await ensureApproval(project.id, 'website')
   await patchProject(project.id, { status: 'waiting_for_approval' })
-  await receipt(project.id, 'website_options_generated', true, { options: 3, provider_output: providerOutput })
-  return { options: 3 }
+  await receipt(project.id, 'website_options_generated', true, {
+    options: 3,
+    generation_mode: 'deterministic_complete_pack_v1',
+    required_fields: ['desktop', 'tablet', 'mobile_pwa', 'pages', 'sections', 'navigation', 'funnel', 'forms', 'integrations', 'states', 'accessibility'],
+  })
+  return { options: 3, generation_mode: 'deterministic_complete_pack_v1' }
 }
 
 function textValue(record: JsonRecord, names: string[]) {
