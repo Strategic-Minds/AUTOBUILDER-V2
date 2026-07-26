@@ -1,0 +1,180 @@
+name: Patch XAB queue runtime
+
+on:
+  push:
+    branches:
+      - auto-builder/forensic-consolidation-20260725
+    paths:
+      - .github/workflows/patch-xab-queue-runtime.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: auto-builder/forensic-consolidation-20260725
+          fetch-depth: 0
+
+      - name: Patch queue and approval runtime
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('lib/factory/xab-v3-store.ts')
+          text = path.read_text()
+
+          old_fields = """  lease_owner: string | null
+            lease_expires_at: string | null
+            last_error: string | null
+          """
+          new_fields = """  lease_owner: string | null
+            lease_expires_at: string | null
+            available_at: string
+            lease_token: string | null
+            last_heartbeat_at: string | null
+            finished_at: string | null
+            dead_lettered_at: string | null
+            last_error: string | null
+          """
+          if old_fields not in text:
+              raise SystemExit('WorkflowJobRow field anchor not found')
+          text = text.replace(old_fields, new_fields, 1)
+
+          rpc_block = """
+          async function rpc<T>(name: string, body: JsonRecord): Promise<T> {
+            try {
+              return await db<T>(`rpc/${name}`, 'POST', body)
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error)
+              if (message.includes('PGRST202') || message.includes('Could not find the function')) {
+                throw new Error(`FACTORY_QUEUE_MIGRATION_REQUIRED: ${name}`)
+              }
+              throw error
+            }
+          }
+
+          """
+          anchor = 'const enc = encodeURIComponent\n'
+          if anchor not in text:
+              raise SystemExit('RPC insertion anchor not found')
+          text = text.replace(anchor, rpc_block + anchor, 1)
+
+          approve_replacement = """export async function approveOption(input: {
+            projectId: string
+            kind: 'logo' | 'website'
+            option: number
+            comment?: string
+            actor: string
+            ownerEmail: string
+            testAutoApproval?: boolean
+          }) {
+            if (![1, 2, 3].includes(input.option)) throw new Error('Option must be 1, 2, or 3')
+            return rpc<JsonRecord>('xab_v3_approve_option', {
+              p_project_id: input.projectId,
+              p_kind: input.kind,
+              p_option: input.option,
+              p_comment: input.comment || '',
+              p_actor: input.actor,
+              p_owner_email: input.ownerEmail,
+              p_test_auto_approval: input.testAutoApproval === true,
+            })
+          }
+
+          function fallbackBrandOptions("""
+          text, count = re.subn(
+              r"export async function approveOption\([\s\S]*?\nfunction fallbackBrandOptions\(",
+              approve_replacement,
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit(f'approveOption replacement count was {count}')
+
+          queue_tail = """export async function claimFactoryJob(workerId: string) {
+            const rows = await rpc<WorkflowJobRow[]>('xab_v3_claim_workflow_job', {
+              p_worker_id: workerId,
+              p_lease_seconds: 240,
+            })
+            return rows[0] || null
+          }
+
+          export async function heartbeatFactoryJob(job: WorkflowJobRow) {
+            if (!job.lease_token) throw new Error('Workflow job has no lease token')
+            return rpc<boolean>('xab_v3_heartbeat_workflow_job', {
+              p_job_id: job.id,
+              p_lease_token: job.lease_token,
+              p_lease_seconds: 240,
+            })
+          }
+
+          async function finishFactoryJob(job: WorkflowJobRow, succeeded: boolean, result?: JsonRecord, error?: string) {
+            if (!job.lease_token) throw new Error('Workflow job has no lease token')
+            const rows = await rpc<WorkflowJobRow[]>('xab_v3_finish_workflow_job', {
+              p_job_id: job.id,
+              p_lease_token: job.lease_token,
+              p_succeeded: succeeded,
+              p_result: result || null,
+              p_error: error || null,
+              p_retry_delay_seconds: 30,
+            })
+            if (!rows[0]) throw new Error('Workflow job finish returned no record')
+            return rows[0]
+          }
+
+          export async function processFactoryJob(job: WorkflowJobRow) {
+            const projects = await db<ProjectRow[]>(`xab_v3_projects?id=eq.${enc(job.project_id)}&limit=1`)
+            const project = projects[0]
+            if (!project) throw new Error('Workflow project is missing')
+            let result: JsonRecord
+            if (job.type === 'generate_brand_options') result = await generateBrandOptions(project)
+            else if (job.type === 'generate_website_options') result = await generateWebsiteOptions(project)
+            else if (job.type === 'build_final_system') result = await startFinalBuild(project)
+            else if (job.type === 'monitor_final_build') result = await monitorFinalBuild(project, job.payload || {})
+            else throw new Error(`Unsupported workflow job ${job.type}`)
+            await finishFactoryJob(job, true, result)
+            return result
+          }
+
+          export async function failFactoryJob(job: WorkflowJobRow, error: string) {
+            const finished = await finishFactoryJob(job, false, undefined, error.slice(0, 1200))
+            const terminal = finished.state === 'failed'
+            if (terminal) await patchProject(job.project_id, { status: 'failed' })
+            await receipt(job.project_id, 'workflow_job_failed', false, {
+              job_id: job.id,
+              type: job.type,
+              terminal,
+              attempts: finished.attempts,
+              max_attempts: finished.max_attempts,
+              dead_lettered_at: finished.dead_lettered_at,
+              error: error.slice(0, 1200),
+            })
+          }
+          """
+          text, count = re.subn(
+              r"export async function claimFactoryJob\([\s\S]*\Z",
+              queue_tail,
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit(f'queue tail replacement count was {count}')
+
+          path.write_text(text)
+          PY
+
+      - name: Commit runtime patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/factory/xab-v3-store.ts
+          git commit -m "feat(factory): use atomic queue and approval RPCs"
+          git push origin HEAD:auto-builder/forensic-consolidation-20260725
