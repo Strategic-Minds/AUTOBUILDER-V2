@@ -1,22 +1,18 @@
-name: Playwright E2E — Preview Only
+name: Playwright E2E — Release Candidate
 
 on:
-  push:
-    branches: [autonomy-test]
   pull_request:
     branches: [main, autonomy-test]
   workflow_dispatch:
     inputs:
       preview_url:
-        description: 'Preview URL to test (required)'
-        required: true
+        description: 'Release candidate URL to test'
+        required: false
         type: string
 
-# WP-4: Minimal permissions
 permissions:
   contents: read
 
-# WP-4: Cancel in-progress runs on new push
 concurrency:
   group: playwright-${{ github.ref }}
   cancel-in-progress: true
@@ -27,38 +23,28 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     env:
-      # Preview-only target. Repository variables or manual input may override
-      # the stable consolidation-branch alias, but production is forbidden.
-      PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url || vars.PLAYWRIGHT_PREVIEW_URL || 'https://autobuilder-v2-git-auto-builder-2c8291-strategic-minds-advisory.vercel.app' }}
+      PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url || vars.PLAYWRIGHT_PREVIEW_URL || 'https://autobuilder-v2-git-auto-builder-2cc522-strategic-minds-advisory.vercel.app' }}
 
     steps:
-      # WP-4: Pinned immutable commit SHAs
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # v4.1.0
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: '22'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium (no OpenAI key required)
+      - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Verify PLAYWRIGHT_BASE_URL is a non-production preview
+      - name: Verify release-candidate URL
         shell: bash
         run: |
-          if [ -z "$PLAYWRIGHT_BASE_URL" ]; then
-            echo 'ERROR: PLAYWRIGHT_BASE_URL is empty.'
-            exit 1
-          fi
-          if echo "$PLAYWRIGHT_BASE_URL" | grep -q 'autobuilderos.com'; then
-            echo 'ERROR: Production URL detected. Use a preview URL.'
-            exit 1
-          fi
+          test -n "$PLAYWRIGHT_BASE_URL"
           if ! echo "$PLAYWRIGHT_BASE_URL" | grep -Eq '^https://[^/]+\.vercel\.app/?$'; then
-            echo 'ERROR: Target must be an HTTPS Vercel preview URL.'
+            echo 'ERROR: Target must be an HTTPS Vercel deployment URL.'
             exit 1
           fi
           echo "Target: $PLAYWRIGHT_BASE_URL"
@@ -66,12 +52,11 @@ jobs:
       - name: Run Playwright headless tests
         run: npx playwright test --project=chromium
         env:
-          # WP-4: CRON_SECRET scoped to only steps that need it
           CRON_SECRET: ${{ secrets.PLAYWRIGHT_TEST_SECRET }}
 
       - name: Upload HTML report
         if: always()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: playwright-html-${{ github.sha }}
           path: playwright-report/
@@ -79,7 +64,7 @@ jobs:
 
       - name: Upload JSON results
         if: always()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: playwright-json-${{ github.sha }}
           path: playwright-results.json
@@ -87,7 +72,7 @@ jobs:
 
       - name: Upload JUnit results
         if: always()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: playwright-junit-${{ github.sha }}
           path: playwright-junit.xml
@@ -95,7 +80,7 @@ jobs:
 
       - name: Upload screenshots on failure
         if: failure()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: playwright-screenshots-${{ github.sha }}
           path: screenshots/
@@ -103,7 +88,7 @@ jobs:
 
       - name: Upload traces on failure
         if: failure()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: playwright-traces-${{ github.sha }}
           path: test-results/
@@ -111,7 +96,7 @@ jobs:
 
       - name: Publish test summary
         if: always()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: playwright-all-${{ github.sha }}
           path: |
