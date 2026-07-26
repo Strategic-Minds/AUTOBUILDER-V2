@@ -1,3 +1,5 @@
+import { monitorNativeBuild, startNativeBuild } from './native-build-adapter'
+
 type JsonRecord = Record<string, unknown>
 
 type ProjectRow = {
@@ -404,51 +406,137 @@ async function startFinalBuild(project: ProjectRow) {
     selectedOption(project.id, 'logo'),
     selectedOption(project.id, 'website'),
   ])
-  const result = await callMcp('run_swarm', {
-    job_id: `final-build:${project.id}`,
-    idea_id: project.id,
-    mission: `Build the complete production-quality website or application for ${project.client_name}, a ${project.industry} business in ${project.region}. Implement the approved brand pack and approved website pack exactly. Create a GitHub implementation branch, deploy a Vercel preview, test desktop, tablet, mobile, routes, buttons, forms, console, network, accessibility, and PWA behavior, run controlled repairs, attach receipts, and stop before production promotion.`,
-    project_key: 'XTREME_AI_BUILDER',
-    mode: 'execute',
-    approved_brand: logo,
-    approved_website: website,
-    production_mutation: false,
-    requested_outputs: ['github_branch', 'pull_request', 'vercel_preview', 'validation_receipts', 'rollback_receipt'],
+  const metadata = project.metadata || {}
+  const result = await startNativeBuild({
+    projectId: project.id,
+    projectName: project.name,
+    clientName: project.client_name,
+    industry: project.industry,
+    region: project.region,
+    services: textValue(metadata, ['services']) || '',
+    brief: textValue(metadata, ['brief']) || '',
+    approvedBrand: logo,
+    approvedWebsite: website,
+    outputRepository: textValue(metadata, ['output_repository', 'output_repo']) || undefined,
+    allowCreateRepository: metadata.allow_output_repository_create === true,
+    allowCreateVercelProject: metadata.allow_vercel_project_create === true,
   })
-  const runId = textValue(result, ['run_id', 'id', 'job_id'])
-  if (!runId) throw new Error('Auto Builder returned no durable run ID')
   await patchProject(project.id, {
     status: 'generating',
-    metadata: { ...(project.metadata || {}), upstream_run_id: runId, upstream_start: result },
+    website_url: result.preview_url,
+    metadata: { ...metadata, native_build_start: result, native_run_id: result.run_id },
+    production_locked: true,
   })
-  await queueJob(project.id, 'monitor_final_build', 'validation', `monitor:${project.id}:${Math.floor(Date.now() / 300000)}`, { run_id: runId })
-  await receipt(project.id, 'final_build_started', true, { run_id: runId, production_locked: true })
-  return { run_id: runId }
+  await queueJob(
+    project.id,
+    'monitor_final_build',
+    'validation',
+    `monitor:${project.id}:${Math.floor(Date.now() / 300000)}`,
+    {
+      deployment_id: result.deployment_id,
+      repository: result.repository,
+      branch: result.branch,
+      pull_request_url: result.pull_request_url,
+      vercel_project_id: result.vercel_project_id,
+    },
+  )
+  await receipt(project.id, 'final_build_started', true, {
+    run_id: result.run_id,
+    repository: result.repository,
+    branch: result.branch,
+    pull_request_url: result.pull_request_url,
+    deployment_id: result.deployment_id,
+    preview_url: result.preview_url,
+    artifact_manifest: result.artifact_manifest,
+    rollback: result.rollback,
+    production_locked: true,
+  })
+  return result as unknown as JsonRecord
 }
 
 async function monitorFinalBuild(project: ProjectRow, payload: JsonRecord) {
-  const runId = typeof payload.run_id === 'string' ? payload.run_id : textValue(project.metadata || {}, ['upstream_run_id'])
-  if (!runId) throw new Error('Monitor job has no run ID')
-  const result = await callMcp('get_swarm_status', { run_id: runId })
-  const state = String(result.status || result.state || '').toUpperCase()
-  if (['FAILED', 'ERROR', 'CANCELLED', 'TERMINAL_FAILED'].includes(state)) {
-    throw new Error(`Final build failed with state ${state}`)
+  const metadata = project.metadata || {}
+  const start = metadata.native_build_start && typeof metadata.native_build_start === 'object'
+    ? metadata.native_build_start as JsonRecord
+    : {}
+  const deploymentId = textValue(payload, ['deployment_id']) || textValue(start, ['deployment_id', 'run_id'])
+  const repository = textValue(payload, ['repository']) || textValue(start, ['repository'])
+  const branch = textValue(payload, ['branch']) || textValue(start, ['branch'])
+  const pullRequestUrl = textValue(payload, ['pull_request_url']) || textValue(start, ['pull_request_url'])
+  const vercelProjectId = textValue(payload, ['vercel_project_id']) || textValue(start, ['vercel_project_id'])
+  if (!deploymentId || !repository || !branch || !pullRequestUrl || !vercelProjectId) {
+    throw new Error('Native build monitor is missing durable deployment metadata')
   }
-  if (!['COMPLETE', 'COMPLETED', 'SUCCESS', 'SUCCEEDED'].includes(state)) {
-    await patchProject(project.id, { status: 'generating', metadata: { ...(project.metadata || {}), upstream_run_id: runId, upstream_status: result } })
-    await queueJob(project.id, 'monitor_final_build', 'validation', `monitor:${project.id}:${Math.floor(Date.now() / 300000) + 1}`, { run_id: runId })
-    return { pending: true, state }
+
+  const result = await monitorNativeBuild({
+    deploymentId,
+    repository,
+    branch,
+    pullRequestUrl,
+    vercelProjectId,
+  })
+  const state = String(result.state || '').toUpperCase()
+  if (!['RELEASE_CANDIDATE', 'VALIDATION_FAILED', 'ERROR', 'CANCELED', 'CANCELLED'].includes(state)) {
+    await patchProject(project.id, {
+      status: 'generating',
+      website_url: result.preview_url,
+      metadata: { ...metadata, native_build_start: start, native_build_status: result },
+      production_locked: true,
+    })
+    await queueJob(
+      project.id,
+      'monitor_final_build',
+      'validation',
+      `monitor:${project.id}:${Math.floor(Date.now() / 300000) + 1}`,
+      payload,
+    )
+    return { pending: true, state, preview_url: result.preview_url }
   }
-  const nested = result.result && typeof result.result === 'object' ? result.result as JsonRecord : {}
-  const previewUrl = textValue(result, ['preview_url', 'vercel_preview_url']) || textValue(nested, ['preview_url', 'vercel_preview_url'])
+
+  if (!result.ok || state !== 'RELEASE_CANDIDATE') {
+    await receipt(project.id, 'final_preview_validation_failed', false, {
+      run_id: deploymentId,
+      state,
+      preview_url: result.preview_url,
+      browser_evidence: result.browser_evidence,
+      rollback: result.rollback,
+      production_locked: true,
+    })
+    throw new Error(`Native final build failed validation with state ${state}`)
+  }
+
   await patchProject(project.id, {
     status: 'waiting_for_approval',
-    website_url: previewUrl,
-    metadata: { ...(project.metadata || {}), upstream_run_id: runId, upstream_status: result, final_preview_url: previewUrl },
+    website_url: result.preview_url,
+    metadata: {
+      ...metadata,
+      native_build_start: start,
+      native_build_status: result,
+      final_preview_url: result.preview_url,
+      operational_parity: result.operational_parity,
+      structural_parity: result.structural_parity,
+      contact_parity: result.contact_parity,
+    },
     production_locked: true,
   })
-  await receipt(project.id, 'final_preview_ready', Boolean(previewUrl), { run_id: runId, preview_url: previewUrl, result, production_locked: true })
-  return { complete: true, preview_url: previewUrl }
+  await receipt(project.id, 'final_preview_ready', true, {
+    run_id: deploymentId,
+    preview_url: result.preview_url,
+    repository: result.repository,
+    branch: result.branch,
+    pull_request_url: result.pull_request_url,
+    browser_evidence: result.browser_evidence,
+    visual_reference_applicable: result.visual_reference_applicable,
+    visual_parity: result.visual_parity,
+    structural_parity: result.structural_parity,
+    operational_parity: result.operational_parity,
+    contact_parity: result.contact_parity,
+    critical_defects: result.critical_defects,
+    high_defects: result.high_defects,
+    rollback: result.rollback,
+    production_locked: true,
+  })
+  return result as unknown as JsonRecord
 }
 
 export async function claimFactoryJob(workerId: string) {
