@@ -1,52 +1,54 @@
 # Golden Universal Project Factory V7 Controller
 
 ## Authority
-This controller registers `GOLDEN_UNIVERSAL_PROJECT_FACTORY_ALL_IN_ONE_CEILING_V7_MASTER.xlsx` as the controlling project-factory workbook for the governed Phoenix Epoxy Pros golden-path pilot.
+This controller registers `GOLDEN_UNIVERSAL_PROJECT_FACTORY_ALL_IN_ONE_CEILING_V7_MASTER.xlsx` as the controlling workbook for validating the Universal Project Factory itself.
 
 - Workbook ID: `GUPF-V7-MASTER`
 - SHA-256: `1980bc524a15a5c84a9dd596aaf726f869a7bd7dc7327b81d51968099662de5c`
 - Drive file ID: `1dI9te-lQ5hbbKWqMxnxrnjIz-ag1afI4`
 - Drive source: https://docs.google.com/spreadsheets/d/1dI9te-lQ5hbbKWqMxnxrnjIz-ag1afI4/edit?usp=drivesdk&ouid=112498193653988253810&rtpof=true&sd=true
-- Drive source-truth folder: https://drive.google.com/drive/folders/1VKWeEgaNv-azUmcI0n2Pk-wyjHu3S4f9
+- Neutral Drive source-truth folder: https://drive.google.com/drive/folders/1HScu68q5IeX_myPf0pFWTQuYyg7KtRO6
 - Base44 app: `6a4ae522852a5e08bfa42450`
-- Pilot project: `PILOT-PHX-EPOXY-PROS-20260725`
+- System validation ID: `UNIVERSAL-PROJECT-FACTORY-V7-20260726`
+
+## Universal scope
+The factory must remain client-neutral, location-neutral, industry-neutral, and brand-neutral. No city, contractor, epoxy, Phoenix, Arizona, or other project-specific implementation is part of this controller.
+
+The V7 workbook governs reusable project initialization, discovery, workbook copying, agent routing, queue creation, documentation, provisioning dry runs, branch builds, validation, bounded repair, Preview acceptance, approvals, receipts, rollback, release, and operations for future projects of many types.
 
 ## Repository authority
 1. `Strategic-Minds/AUTOBUILDER-V2` is the primary factory repository.
 2. `Strategic-Minds/auto-builder-os` is the preferred UI and control-plane donor.
 3. `Strategic-Minds/AUTO_BUILDER-V1` is a selective backend, connector, validation, workbook, automation, and receipt donor.
-4. The V7 workbook controls requirements, architecture, workflows, agents, schemas, validation, approvals, receipts, rollback, and release readiness for this pilot.
+4. The V7 workbook is the controlling specification for the universal system.
 
-## Locked pilot sequence
-`PLAN -> DISCOVERY -> VISUAL CONTRACT -> PROJECT DOCS -> PROVISIONING DRY RUN -> BRANCH BUILD -> VALIDATION -> UP TO THREE BOUNDED REPAIRS -> PREVIEW ACCEPTANCE -> PRODUCTION APPROVAL`
+## Locked validation sequence
+`SOURCE TRUTH -> CONNECTOR AUDIT -> NEUTRAL TEST FIXTURES -> QUEUE AND AGENT ROUTING -> DRY RUN -> BRANCH EXECUTION -> VALIDATION -> BOUNDED REPAIR -> PREVIEW ACCEPTANCE -> RELEASE APPROVAL`
 
-## Pilot contract
-Build `Phoenix Epoxy Pros` as a real Next.js contractor website using the approved Arizona epoxy web-pack and branding already stored in the Drive source-truth folder.
+## Neutral validation matrix
+Validate the factory with synthetic, non-client fixtures covering at minimum:
+- website project
+- web application project
+- workbook-driven operating system
+- automation or workflow project
+- existing repository improvement project
 
-Required characteristics:
-- full desktop width and full page length
-- crisp, non-blurry imagery
-- working navigation and calls to action
-- functional lead form with safe non-production handling
-- service sections for epoxy and decorative-concrete offerings
-- desktop, tablet, and mobile/PWA behavior
-- no static screenshot pretending to be a website
-- no code pasted into chat as the deliverable
+Each fixture tests the factory's ability to create identifiers, project copies, queues, work packets, approvals, branches, receipts, validations, rollback plans, and Preview acceptance records. Fixtures must not create a real customer brand or production deployment.
 
 ## Safety gate
-Branch, draft PR, Preview, sandbox, and reversible validation are authorized. Production deployment, default-branch merge, production database mutation, secret changes, domains, billing, payments, customer messaging, and public publishing remain locked until explicit operator approval.
+Read, dry run, synthetic fixtures, branch writes, draft pull requests, Preview, sandbox, and reversible validation are authorized. Production deployment, default-branch merge, production database mutation, secret changes, domains, billing, payments, customer messaging, and public publishing remain locked until explicit operator approval.
 
 ## Required evidence
-A successful pilot requires:
-- project manifest and routed work packet
-- branch and commit identifiers
-- draft pull request
-- READY Preview deployment
-- route and interaction test results
-- desktop, tablet, and mobile screenshots
-- visual-parity and operational-parity results
-- repair receipts
-- rollback plan
-- Preview acceptance packet
+A successful universal validation requires:
+- universal system manifest
+- neutral fixture definitions
+- project initialization and queue receipts
+- agent-routing evidence
+- connector capability matrix
+- branch and commit identifiers where branch execution is tested
+- draft pull request and Preview evidence where applicable
+- validation and bounded-repair receipts
+- rollback proof
+- universal readiness scorecard
 
 Narrative claims without identifiers or test evidence are not PASS.
