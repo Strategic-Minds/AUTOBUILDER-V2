@@ -1,0 +1,69 @@
+name: Repair secure dependencies and native type
+
+on:
+  push:
+    branches:
+      - auto-builder/forensic-consolidation-20260725
+    paths:
+      - .github/workflows/repair-secure-deps-and-native-type.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: auto-builder/forensic-consolidation-20260725
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Patch BrowserWorker evidence typing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/factory/native-build-adapter.ts')
+          text = path.read_text()
+          old = """  const result = await jsonResponse<JsonRecord>(response, `BrowserWorker ${label}`)
+            return { label, width, height, ...result }
+          }
+          """
+          new = """  const result = await jsonResponse<JsonRecord>(response, `BrowserWorker ${label}`)
+            return {
+              ...result,
+              label,
+              width,
+              height,
+              ok: result.ok === true,
+              status: typeof result.status === 'string' ? result.status : 'fail',
+              artifacts: result.artifacts && typeof result.artifacts === 'object'
+                ? result.artifacts as JsonRecord
+                : {},
+            }
+          }
+          """
+          if old not in text:
+              raise SystemExit('BrowserWorker typing anchor not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Regenerate secure dependency lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Commit repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json lib/factory/native-build-adapter.ts
+          git commit -m "fix(factory): secure dependencies and type browser evidence"
+          git push origin HEAD:auto-builder/forensic-consolidation-20260725
