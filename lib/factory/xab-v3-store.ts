@@ -221,6 +221,41 @@ export async function approveOption(input: {
   })
 }
 
+async function generateBrandOptions(project: ProjectRow) {
+  const options = buildBrandOptions(project).map((option) => ({
+    project_id: project.id,
+    ...option,
+    config: { ...option.config, generation_mode: 'deterministic_complete_pack_v1' },
+  }))
+  await db('xab_v3_logo_options?on_conflict=project_id,option_number', 'POST', options, 'resolution=merge-duplicates,return=representation')
+  await ensureApproval(project.id, 'logo')
+  await patchProject(project.id, { status: 'waiting_for_approval' })
+  await receipt(project.id, 'brand_options_generated', true, {
+    options: 3,
+    generation_mode: 'deterministic_complete_pack_v1',
+    required_fields: ['marks', 'palette', 'typography', 'imagery', 'messaging', 'voice', 'slogans', 'desktop_usage', 'mobile_usage'],
+  })
+  return { options: 3, generation_mode: 'deterministic_complete_pack_v1' }
+}
+
+async function generateWebsiteOptions(project: ProjectRow) {
+  const logo = await selectedOption(project.id, 'logo')
+  const options = buildWebsiteOptions(project, logo).map((option) => ({
+    project_id: project.id,
+    ...option,
+    config: { ...option.config, generation_mode: 'deterministic_complete_pack_v1' },
+  }))
+  await db('xab_v3_website_options?on_conflict=project_id,option_number', 'POST', options, 'resolution=merge-duplicates,return=representation')
+  await ensureApproval(project.id, 'website')
+  await patchProject(project.id, { status: 'waiting_for_approval' })
+  await receipt(project.id, 'website_options_generated', true, {
+    options: 3,
+    generation_mode: 'deterministic_complete_pack_v1',
+    required_fields: ['desktop', 'tablet', 'mobile_pwa', 'pages', 'sections', 'navigation', 'funnel', 'forms', 'integrations', 'states', 'accessibility'],
+  })
+  return { options: 3, generation_mode: 'deterministic_complete_pack_v1' }
+}
+
 function textValue(record: JsonRecord, names: string[]) {
   for (const name of names) {
     const value = record[name]
