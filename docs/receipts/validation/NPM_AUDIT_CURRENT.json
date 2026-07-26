@@ -1,137 +1,23 @@
 {
-  "generated_at": "2026-07-26T02:54:51.681Z",
-  "lockfile_sha256": "2f258bd1a9b5099434be576d07db81473d37cb4170871be60946b70a00bae709",
+  "generated_at": "2026-07-26T02:59:25.665Z",
+  "lockfile_sha256": "bebb2c9fc5601f7b1961f50d90743d165d7742583d1ba0790590e9a76d01f7d8",
   "metadata": {
     "vulnerabilities": {
       "info": 0,
       "low": 0,
-      "moderate": 1,
-      "high": 3,
+      "moderate": 0,
+      "high": 0,
       "critical": 0,
-      "total": 4
+      "total": 0
     },
     "dependencies": {
       "prod": 148,
-      "dev": 158,
-      "optional": 127,
+      "dev": 157,
+      "optional": 129,
       "peer": 0,
       "peerOptional": 0,
-      "total": 341
+      "total": 342
     }
   },
-  "vulnerabilities": [
-    {
-      "name": "@vercel/analytics",
-      "severity": "moderate",
-      "direct": true,
-      "via": [
-        "next"
-      ],
-      "effects": [],
-      "range": ">=1.2.0-beta.1",
-      "nodes": [
-        "node_modules/@vercel/analytics"
-      ],
-      "fixAvailable": {
-        "name": "@vercel/analytics",
-        "version": "1.1.4",
-        "isSemVerMajor": true
-      }
-    },
-    {
-      "name": "next",
-      "severity": "high",
-      "direct": true,
-      "via": [
-        "postcss",
-        "sharp"
-      ],
-      "effects": [
-        "@vercel/analytics"
-      ],
-      "range": "9.3.4-canary.0 - 16.3.0-preview.7",
-      "nodes": [
-        "node_modules/next"
-      ],
-      "fixAvailable": {
-        "name": "next",
-        "version": "9.3.3",
-        "isSemVerMajor": true
-      }
-    },
-    {
-      "name": "postcss",
-      "severity": "high",
-      "direct": false,
-      "via": [
-        {
-          "source": 1117015,
-          "name": "postcss",
-          "dependency": "postcss",
-          "title": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output",
-          "url": "https://github.com/advisories/GHSA-qx2v-qp2m-jg93",
-          "severity": "moderate",
-          "range": "<8.5.10"
-        },
-        {
-          "source": 1124252,
-          "name": "postcss",
-          "dependency": "postcss",
-          "title": "PostCSS: Arbitrary file read and information disclosure via attacker-controlled sourceMappingURL in CSS comments",
-          "url": "https://github.com/advisories/GHSA-6g55-p6wh-862q",
-          "severity": "high",
-          "range": "<=8.5.11"
-        },
-        {
-          "source": 1124288,
-          "name": "postcss",
-          "dependency": "postcss",
-          "title": "PostCSS: Path Traversal in Previous Source Map Auto-Loading (sourceMappingURL) leads to Arbitrary .map File Disclosure",
-          "url": "https://github.com/advisories/GHSA-r28c-9q8g-f849",
-          "severity": "high",
-          "range": "<=8.5.17"
-        }
-      ],
-      "effects": [
-        "next"
-      ],
-      "range": "<=8.5.17",
-      "nodes": [
-        "node_modules/next/node_modules/postcss"
-      ],
-      "fixAvailable": {
-        "name": "next",
-        "version": "9.3.3",
-        "isSemVerMajor": true
-      }
-    },
-    {
-      "name": "sharp",
-      "severity": "high",
-      "direct": false,
-      "via": [
-        {
-          "source": 1124066,
-          "name": "sharp",
-          "dependency": "sharp",
-          "title": "sharp inherited vulnerabilities in libvips: CVE-2026-33327, CVE-2026-33328, CVE-2026-35590, CVE-2026-35591",
-          "url": "https://github.com/advisories/GHSA-f88m-g3jw-g9cj",
-          "severity": "high",
-          "range": "<0.35.0"
-        }
-      ],
-      "effects": [
-        "next"
-      ],
-      "range": "<0.35.0",
-      "nodes": [
-        "node_modules/sharp"
-      ],
-      "fixAvailable": {
-        "name": "next",
-        "version": "9.3.3",
-        "isSemVerMajor": true
-      }
-    }
-  ]
+  "vulnerabilities": []
 }
