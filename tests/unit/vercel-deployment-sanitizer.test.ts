@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { isVercelDeploymentRequest, sanitizeVercelDeploymentBody } from '@/lib/factory/vercel-deployment-sanitizer'
 
-describe('Vercel deployment metadata sanitizer', () => {
+describe('Vercel deployment request sanitizer', () => {
   it('omits empty metadata without inventing visual evidence', () => {
     const sanitized = sanitizeVercelDeploymentBody({
       name: 'xab-clean-room-proof',
@@ -19,6 +19,11 @@ describe('Vercel deployment metadata sanitizer', () => {
         xab_factory_project_id: 'project-123',
       },
     })
+  })
+
+  it('omits the invalid preview target while preserving production', () => {
+    expect(sanitizeVercelDeploymentBody({ target: 'preview', meta: {} })).toEqual({ meta: {} })
+    expect(sanitizeVercelDeploymentBody({ target: 'production', meta: {} })).toEqual({ target: 'production', meta: {} })
   })
 
   it('preserves real evidence values', () => {
