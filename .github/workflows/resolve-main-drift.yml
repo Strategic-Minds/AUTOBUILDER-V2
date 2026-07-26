@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - auto-builder/forensic-consolidation-20260725
-    paths:
-      - .github/workflows/resolve-main-drift.yml
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: resolve-main-drift
+  cancel-in-progress: true
 
 jobs:
   resolve:
