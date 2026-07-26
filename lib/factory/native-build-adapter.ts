@@ -35,6 +35,35 @@ type RuntimeEvidence = {
   intake_validation_status: number
 }
 
+const BROWSER_WORKER_CREDENTIAL_PRIORITY = [
+  'AUTO_BUILDER_OPERATOR_TOKEN',
+  'AUTO_BUILDER_BRIDGE_TOKEN',
+  'AGENT_OPERATOR_TOKEN',
+  'BROWSER_WORKER_SECRET',
+] as const
+
+type BrowserWorkerCredential = {
+  source: typeof BROWSER_WORKER_CREDENTIAL_PRIORITY[number]
+  value: string
+}
+
+export function selectBrowserWorkerCredential(env: Record<string, string | undefined> = process.env): BrowserWorkerCredential {
+  for (const source of BROWSER_WORKER_CREDENTIAL_PRIORITY) {
+    const value = env[source]?.trim()
+    if (value) return { source, value }
+  }
+  throw new NativeBuildBlockedError('BROWSER_WORKER_CREDENTIAL_REQUIRED', 'A server-side BrowserWorker credential is required', [...BROWSER_WORKER_CREDENTIAL_PRIORITY])
+}
+
+export function browserWorkerAuthHeaders(env: Record<string, string | undefined> = process.env): Record<string, string> {
+  const credential = selectBrowserWorkerCredential(env)
+  return {
+    Authorization: `Bearer ${credential.value}`,
+    'X-Auto-Builder-Token': credential.value,
+    'X-Browser-Worker-Token-Source': credential.source,
+  }
+}
+
 export type NativeBuildStartInput = GeneratedSiteInput & {
   outputRepository?: string
   allowCreateRepository?: boolean
@@ -309,8 +338,7 @@ async function upsertVercelEnv(projectId: string, key: string, value: string) {
 }
 
 function operatorToken(projectId: string) {
-  const secret = process.env.BROWSER_WORKER_SECRET || ''
-  if (!secret) throw new NativeBuildBlockedError('BROWSER_WORKER_SECRET_REQUIRED', 'BROWSER_WORKER_SECRET is required for clean-room operator validation', ['BROWSER_WORKER_SECRET'])
+  const { value: secret } = selectBrowserWorkerCredential()
   return createHmac('sha256', secret).update(`proof-operator:${projectId}`).digest('hex')
 }
 
@@ -353,7 +381,7 @@ async function latestProductionDeployment(projectId: string) {
 }
 
 export async function startNativeBuild(input: NativeBuildStartInput): Promise<NativeBuildStartResult> {
-  requiredEnv(['GITHUB_TOKEN', 'VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'BROWSER_WORKER_URL', 'BROWSER_WORKER_SECRET'])
+  requiredEnv(['GITHUB_TOKEN', 'VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'BROWSER_WORKER_URL'])
   const { repository } = await ensureRepository(input)
   await ensureRollbackBaseline(repository)
   const projectName = repository.full_name === CLEAN_ROOM_REPOSITORY ? CLEAN_ROOM_VERCEL_PROJECT : safeName(repository.name, 52)
@@ -460,12 +488,11 @@ function browserSteps(url: string, label: string, token: string) {
 }
 
 async function runBrowserValidation(url: string, width: number, height: number, label: string, referenceUrl: string | null, phase: 'preview' | 'production', projectId: string): Promise<BrowserEvidence> {
-  requiredEnv(['BROWSER_WORKER_URL', 'BROWSER_WORKER_SECRET'])
+  requiredEnv(['BROWSER_WORKER_URL'])
   const workerUrl = (process.env.BROWSER_WORKER_URL || '').replace(/\/$/, '')
-  const secret = process.env.BROWSER_WORKER_SECRET || ''
   const response = await fetch(`${workerUrl}/api/run`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
+    headers: { ...browserWorkerAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({
       version: '1.0',
       type: 'generated-site-validation',

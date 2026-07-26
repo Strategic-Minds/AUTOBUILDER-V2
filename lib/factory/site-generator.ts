@@ -87,6 +87,8 @@ export function buildGeneratedSiteFiles(input: GeneratedSiteInput): Record<strin
   const services = input.services.split(/[\n,]/).map((item) => item.trim()).filter(Boolean)
   const capabilities = services.length ? services : ['Project intake', 'Status tracking', 'Search and filtering', 'Operational visibility']
   const sections = stringList(websiteConfig.sections, ['Hero', 'Capabilities', 'Workflow', 'Proof', 'Intake'])
+  const intakeTableName = `xab_${slugifyProject(input.projectName).replace(/-/g, '_')}_intakes`
+
   const content = {
     projectId: input.projectId,
     projectName: input.projectName,
@@ -104,11 +106,65 @@ export function buildGeneratedSiteFiles(input: GeneratedSiteInput): Record<strin
 
   const packageJson = generatedPackageJson(slugifyProject(input.projectName))
 
-  const serverLib = `import { createHash, timingSafeEqual } from 'node:crypto'\n\ntype IntakeInput = { name: string; email: string; company: string; service: string; details: string }\n\nfunction env(name: string) {\n  const value = process.env[name]?.trim()\n  if (!value) throw new Error('Missing server configuration: ' + name)\n  return value\n}\n\nexport function supabaseConfig() {\n  return {\n    url: (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\\/$/, ''),\n    key: env('SUPABASE_SERVICE_ROLE_KEY'),\n  }\n}\n\nexport async function supabase<T>(path: string, init: RequestInit = {}): Promise<T> {\n  const { url, key } = supabaseConfig()\n  if (!url) throw new Error('Missing server configuration: SUPABASE_URL')\n  const response = await fetch(url + '/rest/v1/' + path, {\n    ...init,\n    headers: {\n      apikey: key,\n      Authorization: 'Bearer ' + key,\n      'Content-Type': 'application/json',\n      Prefer: 'return=representation',\n      ...(init.headers || {}),\n    },\n    cache: 'no-store',\n  })\n  const raw = await response.text()\n  const data = raw ? JSON.parse(raw) : null\n  if (!response.ok) throw new Error('Database request failed ' + response.status + ': ' + raw.slice(0, 300))\n  return data as T\n}\n\nexport function clientIp(request: Request) {\n  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()\n  return forwarded || request.headers.get('x-real-ip') || 'unknown'\n}\n\nexport function ipHash(request: Request) {\n  return createHash('sha256').update(clientIp(request)).digest('hex')\n}\n\nexport function validIntake(value: unknown): IntakeInput | null {\n  if (!value || typeof value !== 'object') return null\n  const data = value as Record<string, unknown>\n  const clean = {\n    name: typeof data.name === 'string' ? data.name.trim().slice(0, 120) : '',\n    email: typeof data.email === 'string' ? data.email.trim().toLowerCase().slice(0, 180) : '',\n    company: typeof data.company === 'string' ? data.company.trim().slice(0, 160) : '',\n    service: typeof data.service === 'string' ? data.service.trim().slice(0, 160) : '',\n    details: typeof data.details === 'string' ? data.details.trim().slice(0, 2000) : '',\n  }\n  if (clean.name.length < 2 || !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(clean.email) || clean.details.length < 10) return null\n  return clean\n}\n\nexport function operatorAuthorized(request: Request) {\n  const expected = process.env.PROOF_OPERATOR_TOKEN || ''\n  const actual = request.headers.get('x-proof-operator') || ''\n  if (!expected || expected.length !== actual.length) return false\n  return timingSafeEqual(Buffer.from(expected), Buffer.from(actual))\n}\n`
+  const serverLib = `import { createHash, timingSafeEqual } from 'node:crypto'\n\ntype IntakeInput = { name: string; email: string; company: string; service: string; details: string }\n\nfunction env(name: string) {\n  const value = process.env[name]?.trim()\n  if (!value) throw new Error('Missing server configuration: ' + name)\n  return value\n}\n\nexport function supabaseConfig() {\n  return {\n    url: (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\\/$/, ''),\n    key: env('SUPABASE_SERVICE_ROLE_KEY'),\n  }\n}\n\nexport function restPath(table: string, query: URLSearchParams | string = '') {\n  const value = typeof query === 'string' ? query : query.toString()\n  return value ? [table, value].join('?') : table\n}\n\nexport async function supabase<T>(path: string, init: RequestInit = {}): Promise<T> {\n  const { url, key } = supabaseConfig()\n  if (!url) throw new Error('Missing server configuration: SUPABASE_URL')\n  const response = await fetch(url + '/rest/v1/' + path, {\n    ...init,\n    headers: {\n      apikey: key,\n      Authorization: 'Bearer ' + key,\n      'Content-Type': 'application/json',\n      Prefer: 'return=representation',\n      ...(init.headers || {}),\n    },\n    cache: 'no-store',\n  })\n  const raw = await response.text()\n  const data = raw ? JSON.parse(raw) : null\n  if (!response.ok) throw new Error('Database request failed ' + response.status + ': ' + raw.slice(0, 300))\n  return data as T\n}\n\nexport function clientIp(request: Request) {\n  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()\n  return forwarded || request.headers.get('x-real-ip') || 'unknown'\n}\n\nexport function ipHash(request: Request) {\n  return createHash('sha256').update(clientIp(request)).digest('hex')\n}\n\nexport function validIntake(value: unknown): IntakeInput | null {\n  if (!value || typeof value !== 'object') return null\n  const data = value as Record<string, unknown>\n  const clean = {\n    name: typeof data.name === 'string' ? data.name.trim().slice(0, 120) : '',\n    email: typeof data.email === 'string' ? data.email.trim().toLowerCase().slice(0, 180) : '',\n    company: typeof data.company === 'string' ? data.company.trim().slice(0, 160) : '',\n    service: typeof data.service === 'string' ? data.service.trim().slice(0, 160) : '',\n    details: typeof data.details === 'string' ? data.details.trim().slice(0, 2000) : '',\n  }\n  if (clean.name.length < 2 || !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(clean.email) || clean.details.length < 10) return null\n  return clean\n}\n\nexport function operatorAuthorized(request: Request) {\n  const expected = process.env.PROOF_OPERATOR_TOKEN || ''\n  const actual = request.headers.get('x-proof-operator') || ''\n  if (!expected || expected.length !== actual.length) return false\n  return timingSafeEqual(Buffer.from(expected), Buffer.from(actual))\n}\n`
 
-  const intakeRoute = `import { NextResponse } from 'next/server'\nimport { ipHash, supabase, validIntake } from '@/lib/proof-server'\n\nexport const dynamic = 'force-dynamic'\n\nexport async function POST(request: Request) {\n  try {\n    const body = validIntake(await request.json())\n    if (!body) return NextResponse.json({ ok: false, error: 'Please provide a valid name, email, and project description.' }, { status: 400 })\n    const hash = ipHash(request)\n    const since = encodeURIComponent(new Date(Date.now() - 60 * 60 * 1000).toISOString())\n    const recent = await supabase<Array<{ id: string }>>('xab_clean_room_intakes?ip_hash=eq.' + hash + '&created_at=gte.' + since + '&select=id&limit=6')\n    if (recent.length >= 5) return NextResponse.json({ ok: false, error: 'Rate limit reached. Try again later.' }, { status: 429 })\n    const rows = await supabase<Array<Record<string, unknown>>>('xab_clean_room_intakes', {\n      method: 'POST',\n      body: JSON.stringify({ ...body, status: 'new', source: 'proof-flow-public-intake', ip_hash: hash }),\n    })\n    return NextResponse.json({ ok: true, project: rows[0] }, { status: 201 })\n  } catch (error) {\n    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : 'Unexpected intake error' }, { status: 500 })\n  }\n}\n`
+  const intakeRoute = `import { NextResponse } from 'next/server'
+import { ipHash, restPath, supabase, validIntake } from '@/lib/proof-server'
 
-  const projectsRoute = `import { NextResponse } from 'next/server'\nimport { operatorAuthorized, supabase } from '@/lib/proof-server'\n\nexport const dynamic = 'force-dynamic'\nconst statuses = new Set(['new', 'reviewing', 'active', 'completed'])\n\nexport async function GET(request: Request) {\n  if (!operatorAuthorized(request)) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })\n  const url = new URL(request.url)\n  const id = url.searchParams.get('id')\n  const query = id\n    ? 'xab_clean_room_intakes?id=eq.' + encodeURIComponent(id) + '&select=*&limit=1'\n    : 'xab_clean_room_intakes?select=*&order=created_at.desc&limit=100'\n  const rows = await supabase<Array<Record<string, unknown>>>(query)\n  return NextResponse.json({ ok: true, projects: rows })\n}\n\nexport async function PATCH(request: Request) {\n  if (!operatorAuthorized(request)) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })\n  const body = await request.json() as { id?: unknown; status?: unknown }\n  const id = typeof body.id === 'string' ? body.id : ''\n  const status = typeof body.status === 'string' ? body.status : ''\n  if (!id || !statuses.has(status)) return NextResponse.json({ ok: false, error: 'Invalid status update' }, { status: 400 })\n  const rows = await supabase<Array<Record<string, unknown>>>('xab_clean_room_intakes?id=eq.' + encodeURIComponent(id), {\n    method: 'PATCH',\n    body: JSON.stringify({ status, updated_at: new Date().toISOString() }),\n  })\n  return NextResponse.json({ ok: true, project: rows[0] })\n}\n`
+export const dynamic = 'force-dynamic'
+const intakeTable = ${safeJson(intakeTableName)}
+
+export async function POST(request: Request) {
+  try {
+    const body = validIntake(await request.json())
+    if (!body) return NextResponse.json({ ok: false, error: 'Please provide a valid name, email, and project description.' }, { status: 400 })
+    const hash = ipHash(request)
+    const since = encodeURIComponent(new Date(Date.now() - 60 * 60 * 1000).toISOString())
+    const recentQuery = new URLSearchParams({ ip_hash: ['eq.', hash].join(''), created_at: ['gte.', since].join(''), select: 'id', limit: '6' })
+    const recent = await supabase<Array<{ id: string }>>(restPath(intakeTable, recentQuery))
+    if (recent.length >= 5) return NextResponse.json({ ok: false, error: 'Rate limit reached. Try again later.' }, { status: 429 })
+    const rows = await supabase<Array<Record<string, unknown>>>(intakeTable, {
+      method: 'POST',
+      body: JSON.stringify({ ...body, status: 'new', source: 'generated-public-intake', ip_hash: hash }),
+    })
+    return NextResponse.json({ ok: true, project: rows[0] }, { status: 201 })
+  } catch (error) {
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : 'Unexpected intake error' }, { status: 500 })
+  }
+}
+`
+
+  const projectsRoute = `import { NextResponse } from 'next/server'
+import { operatorAuthorized, restPath, supabase } from '@/lib/proof-server'
+
+export const dynamic = 'force-dynamic'
+const intakeTable = ${safeJson(intakeTableName)}
+const statuses = new Set(['new', 'reviewing', 'active', 'completed'])
+
+export async function GET(request: Request) {
+  if (!operatorAuthorized(request)) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  const url = new URL(request.url)
+  const id = url.searchParams.get('id')
+  const query = id
+    ? restPath(intakeTable, new URLSearchParams({ id: ['eq.', id].join(''), select: '*', limit: '1' }))
+    : restPath(intakeTable, new URLSearchParams({ select: '*', order: 'created_at.desc', limit: '100' }))
+  const rows = await supabase<Array<Record<string, unknown>>>(query)
+  return NextResponse.json({ ok: true, projects: rows })
+}
+
+export async function PATCH(request: Request) {
+  if (!operatorAuthorized(request)) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  const body = await request.json() as { id?: unknown; status?: unknown }
+  const id = typeof body.id === 'string' ? body.id : ''
+  const status = typeof body.status === 'string' ? body.status : ''
+  if (!id || !statuses.has(status)) return NextResponse.json({ ok: false, error: 'Invalid status update' }, { status: 400 })
+  const rows = await supabase<Array<Record<string, unknown>>>(restPath(intakeTable, new URLSearchParams({ id: ['eq.', id].join('') })), {
+    method: 'PATCH',
+    body: JSON.stringify({ status, updated_at: new Date().toISOString() }),
+  })
+  return NextResponse.json({ ok: true, project: rows[0] })
+}
+`
 
   const healthRoute = `import { NextResponse } from 'next/server'\nimport { supabaseConfig } from '@/lib/proof-server'\n\nexport async function GET() {\n  try {\n    const config = supabaseConfig()\n    return NextResponse.json({ ok: true, service: 'proof-flow-operations', database_configured: Boolean(config.url && config.key), production: true, timestamp: new Date().toISOString() })\n  } catch (error) {\n    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : 'Health failure' }, { status: 503 })\n  }\n}\n`
 
@@ -155,7 +211,7 @@ export function buildGeneratedSiteFiles(input: GeneratedSiteInput): Record<strin
     'biome.json': `${JSON.stringify(biome, null, 2)}\n`,
     'tsconfig.json': `${JSON.stringify({ compilerOptions: { target: 'ES2017', lib: ['dom', 'dom.iterable', 'esnext'], allowJs: false, skipLibCheck: true, strict: true, noEmit: true, esModuleInterop: true, module: 'esnext', moduleResolution: 'bundler', resolveJsonModule: true, isolatedModules: true, jsx: 'preserve', incremental: true, plugins: [{ name: 'next' }], paths: { '@/*': ['./*'] } }, include: ['next-env.d.ts', '**/*.ts', '**/*.tsx', '.next/types/**/*.ts'], exclude: ['node_modules'] }, null, 2)}\n`,
     'next-env.d.ts': `/// <reference types="next" />\n/// <reference types="next/image-types/global" />\n`,
-    'app/layout.tsx': `import type { Metadata } from 'next'\nimport './globals.css'\n\nexport const metadata: Metadata = { title: ${safeJson(input.clientName + ' | ' + input.industry)}, description: ${safeJson(positioning)}, manifest: '/manifest.webmanifest' }\nexport default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body>{children}</body></html> }\n`,
+    'app/layout.tsx': `import type { Metadata } from 'next'\nimport './globals.css'\n\nexport const metadata: Metadata = { title: ${safeJson(`${input.clientName} | ${input.industry}`)}, description: ${safeJson(positioning)}, manifest: '/manifest.webmanifest' }\nexport default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body>{children}</body></html> }\n`,
     'app/page.tsx': homePage,
     'app/dashboard/page.tsx': dashboardPage,
     'app/projects/[id]/page.tsx': detailPage,
