@@ -15,7 +15,11 @@ const viewports = [
 
 function browserConfig() {
   const url = (process.env.BROWSER_WORKER_URL || '').replace(/\/$/, '')
-  const secret = process.env.BROWSER_WORKER_SECRET || ''
+  const secret = process.env.AUTO_BUILDER_OPERATOR_TOKEN
+    || process.env.AUTO_BUILDER_BRIDGE_TOKEN
+    || process.env.AGENT_OPERATOR_TOKEN
+    || process.env.BROWSER_WORKER_SECRET
+    || ''
   if (!url || !secret) throw new Error('BrowserWorker is not configured')
   return { url, secret }
 }
@@ -26,12 +30,14 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function screenshotPresent(result: Record<string, unknown>) {
   const artifacts = asRecord(result.artifacts)
+  const screenshots = Array.isArray(artifacts.screenshots) ? artifacts.screenshots : []
   const candidates = [
     artifacts.screenshot_url,
     artifacts.screenshot,
     artifacts.screenshot_data_url,
     artifacts.screenshot_base64,
     result.screenshot_url,
+    ...screenshots,
   ]
   return candidates.some((value) => typeof value === 'string' && value.length > 20)
 }
@@ -42,11 +48,12 @@ async function runViewport(label: string, width: number, height: number) {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${secret}`,
+      'X-Auto-Builder-Token': secret,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       version: '1.0',
-      type: 'enterprise-production-validation',
+      type: 'generated-site-validation',
       job_id: `universal-gpt-${label}-${crypto.randomUUID()}`,
       correlation_id: `project-0a312970-${label}`,
       objective: `Validate the production application at ${TARGET_URL}. Verify the home page renders, primary navigation contains Overview, Capabilities, and Contact links, there is no horizontal overflow, the page has an h1, links are usable, console and network errors are captured, accessibility roles are captured, and a retrievable screenshot is returned for ${label}.`,
@@ -84,6 +91,8 @@ async function runViewport(label: string, width: number, height: number) {
     screenshot_present: screenshotPresent(result),
     artifacts,
     steps: Array.isArray(result.steps) ? result.steps : [],
+    receipt_id: result.receipt_id || null,
+    worker_version: result.worker_version || null,
     target_commit: TARGET_COMMIT,
     target_url: TARGET_URL,
   }
