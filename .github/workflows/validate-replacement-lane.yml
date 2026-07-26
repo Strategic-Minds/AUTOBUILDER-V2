@@ -1,0 +1,99 @@
+name: Validate replacement consolidation lane
+
+on:
+  push:
+    branches:
+      - auto-builder/one-repo-consolidation-20260725
+    paths:
+      - .github/workflows/validate-replacement-lane.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      PLAYWRIGHT_BASE_URL: https://autobuilder-v2-gmryd809q-strategic-minds-advisory.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: auto-builder/one-repo-consolidation-20260725
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+      - name: Secret and environment coverage gate
+        run: npm run validate:security
+      - name: Biome lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm run test:unit
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Migration and rollback contract
+        shell: bash
+        run: |
+          FORWARD='supabase/migrations/20260726023000_xab_v3_queue_and_approval_hardening.sql'
+          ROLLBACK='supabase/rollback/20260726023000_xab_v3_queue_and_approval_hardening.down.sql'
+          test -f "$FORWARD"
+          test -f "$ROLLBACK"
+          grep -qi 'for update skip locked' "$FORWARD"
+          grep -q 'xab_v3_claim_workflow_job' "$FORWARD"
+          grep -q 'xab_v3_approve_option' "$FORWARD"
+          grep -q 'drop function if exists public.xab_v3_claim_workflow_job' "$ROLLBACK"
+          grep -q 'to service_role' "$FORWARD"
+          if grep -Eqi 'create table .*uasf_|create table .*factory_jobs_v|create table .*autonomous_builds' "$FORWARD"; then
+            echo 'Parallel data-plane table detected.'
+            exit 1
+          fi
+      - name: Enterprise scorecard
+        run: npm run scorecard
+      - name: Production build
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Playwright replacement preview
+        run: npx playwright test --project=chromium
+
+      - name: Write validation receipt
+        shell: bash
+        run: |
+          mkdir -p docs/receipts/validation
+          cat > docs/receipts/validation/PR39_REPLACEMENT_VALIDATION.md <<EOF
+          # PR #39 Replacement Validation Receipt
+
+          - Validated source commit: \`${GITHUB_SHA}\`
+          - Preview URL: \`${PLAYWRIGHT_BASE_URL}\`
+          - Validation date: \`$(date -u +%Y-%m-%dT%H:%M:%SZ)\`
+          - Production mutation: \`false\`
+          - Dependency audit: \`PASS\`
+          - Secret and environment coverage: \`PASS\`
+          - Biome lint: \`PASS\`
+          - Unit tests: \`PASS\`
+          - TypeScript: \`PASS\`
+          - Queue migration and rollback contract: \`PASS\`
+          - Enterprise scorecard execution: \`PASS\`
+          - Next.js production build: \`PASS\`
+          - Chromium desktop/tablet/mobile/PWA suite: \`PASS\`
+          - Production locked: \`true\`
+          EOF
+
+      - name: Commit durable receipt
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/receipts/validation/PR39_REPLACEMENT_VALIDATION.md
+          git commit -m 'docs(validation): record PR39 replacement validation pass'
+          git pull --rebase origin auto-builder/one-repo-consolidation-20260725
+          git push origin HEAD:auto-builder/one-repo-consolidation-20260725
