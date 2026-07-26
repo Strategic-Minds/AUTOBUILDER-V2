@@ -117,7 +117,7 @@ export function getResilienceSnapshot() {
   const isProduction = process.env.VERCEL_ENV === 'production'
   return {
     missionId: 'UASF-V7-20260726-001',
-    system: 'XAB Resilience OS',
+    system: 'Xtreme AI Builder',
     environment: isProduction ? 'PRODUCTION' : 'PREVIEW_ONLY',
     productionLocked: !isProduction,
     sourceTruth: {
@@ -128,9 +128,9 @@ export function getResilienceSnapshot() {
       commit: process.env.VERCEL_GIT_COMMIT_SHA || 'local',
     },
     modules: [
-      { id: 'source-truth-sentinel', name: 'Source Truth Sentinel', status: 'OPERATIONAL', purpose: 'Detect workbook, Drive, GitHub, Vercel, database, and receipt drift.' },
-      { id: 'browserworker-validation-mesh', name: 'BrowserWorker Validation Mesh', status: 'OPERATIONAL', purpose: 'Execute desktop, tablet, mobile, accessibility, console, network, and screenshot validation.' },
-      { id: 'recursive-repair-controller', name: 'Recursive Repair Controller', status: 'OPERATIONAL', purpose: 'Classify failures and drive bounded repair, hardening, retest, scoring, and release decisions.' },
+      { id: 'source-truth-verification', name: 'Source truth verification', status: 'OPERATIONAL', purpose: 'Detect workbook, Drive, GitHub, Vercel, database, and receipt drift.' },
+      { id: 'browserworker-validation', name: 'BrowserWorker validation', status: 'OPERATIONAL', purpose: 'Execute desktop, tablet, mobile, accessibility, console, network, and screenshot validation.' },
+      { id: 'recursive-testing-and-repair', name: 'Recursive testing and repair', status: 'OPERATIONAL', purpose: 'Classify failures and drive bounded repair, hardening, retest, scoring, and release decisions.' },
     ],
     connectors: {
       googleDrive: 'VERIFIED',
