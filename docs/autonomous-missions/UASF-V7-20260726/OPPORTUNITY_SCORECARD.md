@@ -6,21 +6,21 @@ Scoring uses the V7 workbook criteria and current connector evidence. Scores are
 
 | Candidate | Business Value | Existing Leverage | Differentiation | Feasibility | Testability | Scalability | Automation | Data | Speed | Strategic Fit | Weighted Score |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **XAB Resilience OS** | 10 | 10 | 10 | 9 | 10 | 10 | 10 | 9 | 9 | 10 | **9.80** |
-| Universal Source Truth Sentinel | 9 | 10 | 9 | 10 | 10 | 10 | 9 | 10 | 10 | 10 | 9.65 |
-| BrowserWorker Validation Mesh | 8 | 10 | 9 | 10 | 10 | 10 | 9 | 9 | 10 | 10 | 9.45 |
-| Autonomous Agent Operations Center | 9 | 9 | 9 | 8 | 8 | 10 | 10 | 8 | 8 | 9 | 8.90 |
-| National Takeoff and Bid Intelligence | 10 | 8 | 9 | 7 | 8 | 9 | 9 | 8 | 6 | 8 | 8.40 |
+| **Xtreme AI Builder** | 10 | 10 | 10 | 9 | 10 | 10 | 10 | 9 | 9 | 10 | **9.80** |
+| Source-truth verification capability | 9 | 10 | 9 | 10 | 10 | 10 | 9 | 10 | 10 | 10 | 9.65 |
+| BrowserWorker validation capability | 8 | 10 | 9 | 10 | 10 | 10 | 9 | 9 | 10 | 10 | 9.45 |
+| Autonomous operations capability | 9 | 9 | 9 | 8 | 8 | 10 | 10 | 8 | 8 | 9 | 8.90 |
+| National takeoff and bidding capability | 10 | 8 | 9 | 7 | 8 | 9 | 9 | 8 | 6 | 8 | 8.40 |
 
 ## Selected system
 
-**XAB Resilience OS**
+**Xtreme AI Builder**
 
-A universal reliability and recovery control plane that combines three modules:
+The existing Xtreme AI Builder system is being strengthened with three capabilities:
 
-1. **Source Truth Sentinel**: detects drift between the V7 workbook, Drive, GitHub, Vercel, Supabase, and receipts.
-2. **BrowserWorker Validation Mesh**: validates routes, interactions, responsive behavior, accessibility, console errors, network errors, and screenshots.
-3. **Recursive Repair Controller**: classifies failures and drives audit, fix, heal, harden, test, optimize, retest, and rollback loops.
+1. **Source-truth verification**: detects drift between the V7 workbook, Drive, GitHub, Vercel, Supabase, and receipts.
+2. **BrowserWorker validation**: validates routes, interactions, responsive behavior, accessibility, console errors, network errors, and screenshots.
+3. **Recursive testing and repair**: classifies failures and drives audit, fix, heal, harden, test, optimize, retest, and rollback loops.
 
 ## Why it wins
 
@@ -39,4 +39,4 @@ A universal reliability and recovery control plane that combines three modules:
 
 ## Implementation decision
 
-Use `Strategic-Minds/AUTOBUILDER-V2` as the branch-safe control and receipt surface for this mission because it has the newest verified one-repo consolidation commits. Treat `Strategic-Minds/XAB` as an authority candidate and donor until a dedicated authority receipt resolves the naming split. No default branch is modified.
+Use `Strategic-Minds/AUTOBUILDER-V2` as the branch-safe control and receipt surface for this mission because it has the newest verified one-repo consolidation commits. Treat `Strategic-Minds/XAB` as an authority candidate and donor until a dedicated authority receipt resolves the repository split. No default branch is modified.
