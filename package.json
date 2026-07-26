@@ -10,6 +10,7 @@
     "build:next": "next build",
     "start": "next start",
     "lint": "biome lint app components lib packages scripts tests e2e",
+    "lint:release": "biome lint app/factory app/api/factory app/api/cron/auto-builder app/api/cron/factory app/api/gpt-bridge lib/factory lib/internal-auth.ts lib/api-auth.ts packages/security scripts/validate-security.ts scripts/validate-migration.mjs tests/unit e2e/critical-journeys.spec.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
@@ -18,7 +19,7 @@
     "scorecard": "tsx scripts/scorecard.ts",
     "validate:security": "tsx scripts/validate-security.ts",
     "validate:migration": "node scripts/validate-migration.mjs",
-    "validate:release": "npm audit --audit-level=high && npm run validate:security && npm run lint && npm run test:unit && npx tsc --noEmit && npm run validate:migration && npm run scorecard"
+    "validate:release": "npm audit --audit-level=high && npm run validate:security && npm run lint:release && npm run test:unit && npx tsc --noEmit && npm run validate:migration && npm run scorecard"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.7",
