@@ -37,7 +37,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.488.0",
-    "next": "15.5.18",
+    "next": "15.5.22",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "swr": "^2.4.2",
@@ -53,15 +53,14 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/ws": "^8.5.0",
-    "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.21",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "15.5.18",
-    "postcss": "^8.5.1",
+    "eslint": "10.8.0",
+    "eslint-config-next": "16.2.12",
+    "postcss": "^8.5.18",
     "tailwindcss": "^4.3.2",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0",
-    "vitest": "^1.6.0"
+    "vitest": "4.1.10"
   },
   "_build_timestamp": "2026-07-12T21:47:27.982501"
 }
