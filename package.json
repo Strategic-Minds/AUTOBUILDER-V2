@@ -8,13 +8,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:unit": "vitest run tests/unit",
     "adapters:run-all": "tsx scripts/run_all_adapters.ts",
-    "scorecard": "tsx scripts/scorecard.ts"
+    "scorecard": "tsx scripts/scorecard.ts",
+    "validate:security": "tsx scripts/validate-security.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.7",
