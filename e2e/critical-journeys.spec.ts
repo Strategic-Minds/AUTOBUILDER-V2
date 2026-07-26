@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 /**
- * Preview-only browser acceptance tests.
+ * Release-candidate browser acceptance tests.
  * Evidence: desktop, tablet, mobile, PWA assets, API contracts,
  * unauthenticated security boundaries, console output and network failures.
  */
@@ -26,7 +26,7 @@ function collectBrowserEvidence(page: import('@playwright/test').Page) {
   return { consoleErrors, networkFailures, serverErrors }
 }
 
-test.describe('Critical Journeys — Preview', () => {
+test.describe('Critical Journeys — Release Candidate', () => {
   test('T001: Homepage loads and returns 200', async ({ page }) => {
     const evidence = collectBrowserEvidence(page)
     const response = await page.goto(BASE, { waitUntil: 'domcontentloaded' })
@@ -102,7 +102,7 @@ test.describe('Critical Journeys — Preview', () => {
   test('T010: Factory operator surface loads', async ({ page }) => {
     const response = await page.goto(`${BASE}/factory`, { waitUntil: 'domcontentloaded' })
     expect(response?.status()).toBeLessThan(400)
-    await expect(page.getByRole('heading', { name: /finished system/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /build the real system/i })).toBeVisible()
     await page.screenshot({ path: 'screenshots/factory-desktop.png', fullPage: true })
   })
 
@@ -133,7 +133,7 @@ test.describe('Critical Journeys — Preview', () => {
 test.describe('Authenticated API Contract', () => {
   test('T013: Heartbeat returns a governed response when a test secret exists', async ({ request }) => {
     const secret = process.env.CRON_SECRET || ''
-    test.skip(!secret, 'PLAYWRIGHT_TEST_SECRET is not configured for this preview run')
+    test.skip(!secret, 'PLAYWRIGHT_TEST_SECRET is not configured for this release-candidate run')
 
     const response = await request.get(`${BASE}/api/cron/auto-builder`, {
       headers: { Authorization: `Bearer ${secret}` },
