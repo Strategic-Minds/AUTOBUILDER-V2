@@ -14,6 +14,33 @@ const SCAN_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.json', '.md', '
 
 export type SecretFinding = { file: string; pattern: string }
 
+function isSyntheticPlaceholder(value: string) {
+  const compact = value.toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (compact.includes('placeholder') || compact.includes('example') || compact.includes('replace')) return true
+
+  const slackSuffix = value.match(/xox[baprs]-([0-9a-z-]+)/i)?.[1] || ''
+  if (slackSuffix && /^x+$/i.test(slackSuffix.replace(/-/g, ''))) return true
+
+  const quotedValue = value.match(/['"]([A-Za-z0-9_-]{20,})['"]/)?.[1] || ''
+  if (quotedValue && /^x+$/i.test(quotedValue.replace(/[_-]/g, ''))) return true
+
+  return false
+}
+
+function containsRealSecret(content: string, pattern: RegExp) {
+  const flags = pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`
+  const matcher = new RegExp(pattern.source, flags)
+  for (const match of content.matchAll(matcher)) {
+    const candidate = match[0]
+    const lineStart = content.lastIndexOf('\n', match.index ?? 0) + 1
+    const lineEnd = content.indexOf('\n', match.index ?? 0)
+    const line = content.slice(lineStart, lineEnd === -1 ? content.length : lineEnd)
+    if (isSyntheticPlaceholder(candidate) || (/placeholder\s*=/i.test(line) && isSyntheticPlaceholder(line))) continue
+    return true
+  }
+  return false
+}
+
 export async function scanForSecrets(rootDir: string): Promise<SecretFinding[]> {
   const findings: SecretFinding[] = []
 
@@ -31,7 +58,7 @@ export async function scanForSecrets(rootDir: string): Promise<SecretFinding[]> 
         await walk(full)
         continue
       }
-      // Never flag the example file itself — it intentionally documents var names, not values.
+      // Never flag the example file itself: it intentionally documents names, not values.
       if (entry.name === '.env.example.md' || entry.name.endsWith('.example.md')) continue
       const ext = path.extname(entry.name)
       if (!SCAN_EXTENSIONS.has(ext)) continue
@@ -42,7 +69,7 @@ export async function scanForSecrets(rootDir: string): Promise<SecretFinding[]> 
         continue
       }
       for (const { name, re } of SECRET_PATTERNS) {
-        if (re.test(content)) findings.push({ file: path.relative(rootDir, full), pattern: name })
+        if (containsRealSecret(content, re)) findings.push({ file: path.relative(rootDir, full), pattern: name })
       }
     }
   }
@@ -51,7 +78,7 @@ export async function scanForSecrets(rootDir: string): Promise<SecretFinding[]> 
   return findings
 }
 
-/** Cross-checks every process.env.<NAME> lookups referenced in the codebase against what's
+/** Cross-checks every process.env.<NAME> lookup referenced in the codebase against what is
  * documented in .env.example.md, so nothing required-but-undocumented ships silently. */
 export async function checkEnvCoverage(rootDir: string): Promise<{ referenced: string[]; documented: string[]; missing: string[] }> {
   const referenced = new Set<string>()
