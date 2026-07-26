@@ -45,7 +45,7 @@ function parseAgentResponse(text: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = authorizeBridgeRequest(req, 'agents:dispatch')
+  const auth = authorizeBridgeRequest(req)
   if (!auth.ok) {
     return NextResponse.json(
       { ok: false, state: auth.state, error: auth.error, request_id: auth.request_id },
