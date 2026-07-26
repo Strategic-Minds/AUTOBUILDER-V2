@@ -55,11 +55,15 @@
     "@types/react": "^19.0.0",
     "@types/ws": "^8.5.0",
     "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.18",
+    "postcss": "8.5.23",
     "tailwindcss": "^4.3.2",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0",
     "vitest": "4.1.10"
+  },
+  "overrides": {
+    "postcss": "8.5.23",
+    "sharp": "0.35.3"
   },
   "_build_timestamp": "2026-07-12T21:47:27.982501"
 }
