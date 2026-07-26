@@ -1,25 +1,74 @@
-{
-  "name": "AUTO_BUILDER Master Validate",
-  "on": {
-    "pull_request": { "branches": ["main", "develop"] },
-    "push": { "branches": ["main"] },
-    "workflow_dispatch": {}
-  },
-  "jobs": {
-    "validate": {
-      "runs-on": "ubuntu-latest",
-      "steps": [
-        { "uses": "actions/checkout@v4" },
-        {
-          "uses": "actions/setup-node@v4",
-          "with": { "node-version": "22", "cache": "npm" }
-        },
-        { "name": "Debug info", "run": "node --version && npm --version" },
-        { "name": "Install dependencies", "run": "npm ci --verbose" },
-        { "name": "TypeScript check", "run": "npx tsc --noEmit --listFiles 2>&1 | head -100" },
-        { "name": "List tsconfig", "run": "cat tsconfig.json" },
-        { "name": "Build", "run": "npm run build --if-present" }
-      ]
-    }
-  }
-}
+name: AUTO_BUILDER Master Validate
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: master-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Install, audit, lint, test, typecheck, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Runtime versions
+        run: node --version && npm --version
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Secret and environment coverage gate
+        run: npm run validate:security
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Verify queue migration and rollback pair
+        shell: bash
+        run: |
+          FORWARD='supabase/migrations/20260726023000_xab_v3_queue_and_approval_hardening.sql'
+          ROLLBACK='supabase/rollback/20260726023000_xab_v3_queue_and_approval_hardening.down.sql'
+          test -f "$FORWARD"
+          test -f "$ROLLBACK"
+          grep -q 'for update skip locked' "$FORWARD"
+          grep -q 'xab_v3_claim_workflow_job' "$FORWARD"
+          grep -q 'drop function if exists public.xab_v3_claim_workflow_job' "$ROLLBACK"
+          grep -q 'to service_role' "$FORWARD"
+          if grep -Eq 'create table .*uasf_|create table .*factory_jobs_v|create table .*autonomous_builds' "$FORWARD"; then
+            echo 'Parallel data-plane table detected.'
+            exit 1
+          fi
+
+      - name: Computed enterprise scorecard
+        run: npm run scorecard
+
+      - name: Production build
+        run: npm run build
