@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-25T22:15:00-04:00",
+  "canonical_repository": "Strategic-Minds/AUTOBUILDER-V2",
+  "canonical_branch": "auto-builder/forensic-consolidation-20260725",
+  "canonical_pull_request": 31,
+  "evidence_policy": "Runtime, code, tests and deployment evidence outrank names, README claims and timestamps.",
+  "installations": [
+    "Strategic-Minds",
+    "XTREME-AI-SYSTEMS",
+    "XPS-IINTELLIGENCE-SYSTEMS",
+    "xps-admin"
+  ],
+  "verified_core": [
+    {
+      "repository": "Strategic-Minds/AUTOBUILDER-V2",
+      "repository_id": 1286784714,
+      "classification": "CANONICAL_PLATFORM",
+      "default_branch": "main",
+      "visibility": "public",
+      "archived": false,
+      "evidence": ["PR #31", "Vercel project prj_YSIPjYnM4KtbsiQsVVLHQ5A3AVWe", "master validation PASS", "factory preview deployment"],
+      "disposition": "SURVIVE"
+    },
+    {
+      "repository": "XTREME-AI-SYSTEMS/factory-control-plane",
+      "repository_id": 1304922606,
+      "classification": "CORE_DONOR",
+      "default_branch": "main",
+      "visibility": "private",
+      "archived": false,
+      "unique_modules": ["pipeline state machine", "five-cycle ceiling", "release gates", "rollback migrations"],
+      "disposition": "ABSORB_SELECTIVELY_THEN_ARCHIVE_CANDIDATE"
+    },
+    {
+      "repository": "XTREME-AI-SYSTEMS/factory-runtime",
+      "repository_id": 1304922623,
+      "classification": "CORE_DONOR",
+      "default_branch": "main",
+      "visibility": "private",
+      "archived": false,
+      "unique_modules": ["planner", "task dependency graph", "sandbox policy", "repair evidence"],
+      "disposition": "ABSORB_SELECTIVELY_THEN_ARCHIVE_CANDIDATE"
+    },
+    {
+      "repository": "Strategic-Minds/AUTO_BUILDER-V1",
+      "repository_id": 1249596503,
+      "classification": "CORE_DONOR",
+      "default_branch": "main",
+      "visibility": "public",
+      "archived": false,
+      "unique_modules": ["MCP", "Drive", "Vercel", "platform provisioning", "browser helpers"],
+      "risk": "Unsupported providers may fall back to manual_receipt.",
+      "disposition": "ABSORB_REAL_ADAPTERS_ONLY"
+    },
+    {
+      "repository": "Strategic-Minds/BROWSERWORKER",
+      "repository_id": 1271987311,
+      "classification": "CORE_DONOR",
+      "default_branch": "main",
+      "visibility": "public",
+      "archived": false,
+      "unique_modules": ["authenticated Chromium jobs", "Browserbase CDP", "SSRF protection", "screenshots", "console and network capture"],
+      "disposition": "SOURCE_UNDER_CANONICAL_MONOREPO_SEPARATE_DEPLOY_TARGET_ALLOWED"
+    },
+    {
+      "repository": "Strategic-Minds/CHATGPT-AUTONOMOUS-SYSTEM-FACTORY",
+      "repository_id": 1312367887,
+      "classification": "CORE_DONOR",
+      "default_branch": "main",
+      "visibility": "private",
+      "archived": false,
+      "evidence": ["PR #1", "83/83 donor tests", "READY Vercel preview", "production lock"],
+      "unique_modules": ["queue leases and recovery", "immutable receipts", "request guards", "connector allowlists", "brand and web pack contracts"],
+      "risk": "Its uasf_* schema is a parallel data plane and must not be imported.",
+      "disposition": "HARVEST_PURE_LOGIC_ONLY"
+    },
+    {
+      "repository": "Strategic-Minds/WEBSITE-FACTORY",
+      "repository_id": 1271623844,
+      "classification": "CORE_DONOR",
+      "visibility": "private",
+      "archived": false,
+      "unique_modules": ["intake normalization", "build packets", "provisioning manifests"],
+      "disposition": "ABSORB_SELECTIVELY"
+    },
+    {
+      "repository": "Strategic-Minds/WEBSITE-SYSTEM-TEMPLATE",
+      "repository_id": 1310537721,
+      "classification": "CORE_DONOR",
+      "visibility": "private",
+      "archived": false,
+      "unique_modules": ["full-length desktop and mobile contract", "PWA standard", "preview and parity gates"],
+      "disposition": "ABSORB_AS_PROJECT_CONTRACT"
+    },
+    {
+      "repository": "Strategic-Minds/MASTER-TEMPLATE-SYSTEM",
+      "repository_id": 1287760803,
+      "classification": "SELECTIVE_DONOR",
+      "visibility": "public",
+      "archived": false,
+      "disposition": "IMPORT_CURRENT_STANDARDS_ONLY"
+    },
+    {
+      "repository": "Strategic-Minds/sm-qa-agent",
+      "repository_id": 1280764670,
+      "classification": "SELECTIVE_DONOR",
+      "visibility": "public",
+      "archived": false,
+      "unique_modules": ["persona QA", "route and form testing", "security and SEO checks"],
+      "disposition": "ABSORB_VALIDATION_PATTERNS"
+    },
+    {
+      "repository": "Strategic-Minds/strategic-minds-test-suite",
+      "repository_id": 1280718440,
+      "classification": "SELECTIVE_DONOR",
+      "visibility": "public",
+      "archived": false,
+      "unique_modules": ["scoring taxonomy", "test persistence"],
+      "disposition": "ABSORB_SCORING_PATTERNS"
+    }
+  ],
+  "strategic_minds_inventory": {
+    "classification_default": "COULD_NOT_VERIFY",
+    "repositories": [
+      "ENTER_HERE", "SANDBOX", "AI-CONSULTANT", "XPS_STAGED_LEADS", "chatbot", "FRONTEND", "mr.smoke", "shopify-workflow-benchmark-and-refactor-template", "templates", "EPOXY-CHANGES-LIVES", "ADMIN-COMMAND", "intelligence-os", "EPOXY_WILL_CHANGE_YOUR_LIFE", "AI_CANT_DO_THIS", "AUTO_BUILDER-V1", "SOCIAL_MEDIA_SEO_ENGINE", "GPT_WORKBOOK_LIBRARY", "GPT_PLAYBOOK", "EDEN_SKYE", "EDENSKYESTUDIOS", "NASHVILLERESINWORX", "v0-auto-builder-v2", "strategicminds", "DIVERGENTBUSINESSMAN", "XPSWEBSITES", "WEBSITE-FACTORY", "BROWSERWORKER", "VIZUALIZER", "TAKEOFF", "PHOENIX-EPOXY-PROS", "CLONE-AI", "Agent-Zero", "BUSINESS_AI_FACTORY", "shadow-clone-enterprise-os", "epoxy-nation-pro", "epoxy-nation-pro-v2", "floorvision-pro", "anima-app-intelligence", "national-epoxy-pros", "strategic-minds-test-suite", "sm-qa-agent", "auto-comm", "BUSINESS-BUILDER", "oxfloors-com-intelligence", "xps-website-factory", "strategic-minds-ai-os", "AUTOBUILDER-V2", "MASTER-TEMPLATE-SYSTEM", "STRATEGIC-MINDS-AI", "STRATEGIC-MINDS-AI-V2", "auto-builder-os", "NEP", "FULL-AUTO", "nep-production", "AUTOBUILDER-2.0", "launch-pack", "INTELLIGENCE-CUBE", "NATIONAL-EPOXY", "INTELLI-CUBE-TEST.10", "INTELLI-CUBE-TEST-2.0", "INTELI-CUBE-PLANS", "NATION-EPOXY-PROS-V2", "nation", "test", "XTREME-WEBSITE", "XTREME-NATIONAL-EPOXY", "XTREME-TAKEOFFS", "gpt-automation-pipeline", "APP-FACTORY", "NCP-CONTRACTOR-APP", "xtreme-builder", "XAB", "APP-FACTORY-LAB", "xtreme-ai-builder", "xtreme-si-builder", "ncp-contractor-app-v2", "prospectai-site", "nexusreach-site", "apollo-intelligence", "alpha-headful-ai", "xtreme-ai", "Xtreme-Agent", "SKYE-WORK", "scraper", "XTREME-SCRAPER", "XTREME-AI-BUILDER-GENERATOR", "Xtreme-Scraper-v2", "desert-forge-coatings", "arizona-epoxy-contractor-webpacks", "epoxy-contractor-website", "west-palm-beach-epoxy-pros", "WEBSITE-SYSTEM-TEMPLATE", "CHATGPT-BINARY-UPLOAD-BRIDGE", "bidgenius", "CHATGPT-AUTONOMOUS-SYSTEM-FACTORY"
+    ]
+  },
+  "xtreme_ai_systems_inventory": {
+    "classification_default": "ARCHIVE_CANDIDATE",
+    "repositories": [
+      ".github", "factory-control-plane", "factory-runtime", "browserworker", "parity-engine", "template-registry", "platform-config", "golden-path", "prompt-library", "lead-scoring-models", "composite-actions", "mcp-tools-extended", "visual-regression", "seo-engine", "website-templates", "content-engine", "factory-dashboards", "image-pipeline", "competitor-intel", "knowledge-base", "prompt-registry", "seo-geodb", "mcp-custom-servers", "rag-knowledge-base", "contractor-templates-registry", "image-scoring-engine", "template-compiler", "base44-skills-sdk", "vercel-deploy-controller", "seo-auditor", "skills-library", "market-intelligence-db", "contractor-bid-pipeline", "xps-takeoff-command", "xtreme-ai-systems"
+    ],
+    "note": "Independent product repositories remain active. Archived micro-repositories are references only. Core factory repositories require selective harvest before retirement."
+  },
+  "xps_intelligence_inventory": {
+    "classification_default": "INDEPENDENT_PRODUCT",
+    "repositories": [
+      "XPS_INTEL_CORE", "XPS_archieve", "XPS_DOCS", "XPS_AUTO_BUILDER", "XPS_PROMPT_LIBRARY", "XPS_VISION_CORTEX", "SIMPLE_CRM", "SANDBOX", "XPS_CALL_CENTER", "XPS-COMMAND", "lead-sniper", "strategic-minds-advisory", "proofloops", "XPS_CONTRACTOR_SUCCESS", "bronx-nourish-access", "Shopify-workflow-system", "SOCIAL-MEDIA-SEO-ENGINE", "AI-CONSULTANT", "demo-repository"
+    ]
+  },
+  "xps_admin_inventory": {
+    "classification_default": "LEGACY_DUPLICATE",
+    "repositories": [
+      "WEBSITEFACTORY", "strategic-minds-advisory", "xps-clone-v1", "xps-master-clone", "xps-workflow", "xps-clone-v2", "xps-clone-v3", "shadow-clone-enterprise-os", "national-epoxy-pros-website", "ncp-xps-intelligence"
+    ],
+    "note": "Product-specific repositories may remain independent; clone and workflow shells require evidence before retirement."
+  },
+  "protected_actions_pending": [
+    "merge PR #31",
+    "apply production database migrations",
+    "repoint production Vercel root directories",
+    "promote production deployment",
+    "archive superseded repositories",
+    "change production environment variables",
+    "change DNS or domains"
+  ]
+}
