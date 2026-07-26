@@ -27,8 +27,9 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     env:
-      # WP-3: Must be supplied — no production fallback
-      PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url || vars.PLAYWRIGHT_PREVIEW_URL }}
+      # Preview-only target. Repository variables or manual input may override
+      # the stable consolidation-branch alias, but production is forbidden.
+      PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url || vars.PLAYWRIGHT_PREVIEW_URL || 'https://autobuilder-v2-git-auto-builder-2c8291-strategic-minds-advisory.vercel.app' }}
 
     steps:
       # WP-4: Pinned immutable commit SHAs
@@ -45,10 +46,19 @@ jobs:
       - name: Install Playwright Chromium (no OpenAI key required)
         run: npx playwright install --with-deps chromium
 
-      - name: Verify PLAYWRIGHT_BASE_URL is not production
+      - name: Verify PLAYWRIGHT_BASE_URL is a non-production preview
+        shell: bash
         run: |
+          if [ -z "$PLAYWRIGHT_BASE_URL" ]; then
+            echo 'ERROR: PLAYWRIGHT_BASE_URL is empty.'
+            exit 1
+          fi
           if echo "$PLAYWRIGHT_BASE_URL" | grep -q 'autobuilderos.com'; then
             echo 'ERROR: Production URL detected. Use a preview URL.'
+            exit 1
+          fi
+          if ! echo "$PLAYWRIGHT_BASE_URL" | grep -Eq '^https://[^/]+\.vercel\.app/?$'; then
+            echo 'ERROR: Target must be an HTTPS Vercel preview URL.'
             exit 1
           fi
           echo "Target: $PLAYWRIGHT_BASE_URL"
@@ -109,4 +119,3 @@ jobs:
             playwright-results.json
             playwright-junit.xml
           retention-days: 14
-
