@@ -1,4 +1,4 @@
-# XAB Resilience OS System Contract
+# Xtreme AI Builder System Contract
 
 Mission: `UASF-V7-20260726-001`
 
@@ -8,7 +8,7 @@ Create a universal, project-neutral reliability control plane that detects sourc
 
 ## Architecture
 
-### 1. Source Truth Sentinel
+### 1. Source truth verification
 
 Inputs:
 
@@ -28,7 +28,7 @@ Responsibilities:
 - Detect completion claims without receipts
 - Keep Production locked when evidence is missing
 
-### 2. BrowserWorker Validation Mesh
+### 2. BrowserWorker validation
 
 Planned evidence contract:
 
@@ -43,7 +43,7 @@ Planned evidence contract:
 
 BrowserWorker has evidence authority only. It does not receive repository-write, database-migration, secret, merge, or Production authority.
 
-### 3. Recursive Repair Controller
+### 3. Recursive testing and repair
 
 Implemented core stages:
 
