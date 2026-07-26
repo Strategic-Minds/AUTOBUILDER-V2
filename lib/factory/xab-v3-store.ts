@@ -133,6 +133,20 @@ async function ensureApproval(projectId: string, kind: 'logo' | 'website') {
   return rows[0]
 }
 
+async function selectedOption(projectId: string, kind: 'logo' | 'website') {
+  const table = kind === 'logo' ? 'xab_v3_logo_options' : 'xab_v3_website_options'
+  const approvals = await db<Array<{ selected_option: number }>>(
+    `xab_v3_approval_requests?project_id=eq.${enc(projectId)}&kind=eq.${kind}&state=eq.approved&order=created_at.desc&limit=1`,
+  )
+  const selected = approvals[0]?.selected_option
+  if (!selected) throw new Error(`No approved ${kind} option exists`)
+  const rows = await db<JsonRecord[]>(
+    `${table}?project_id=eq.${enc(projectId)}&option_number=eq.${selected}&limit=1`,
+  )
+  if (!rows[0]) throw new Error(`Approved ${kind} option is missing`)
+  return rows[0]
+}
+
 export async function listProjects(ownerEmail: string) {
   return db<ProjectRow[]>(
     `xab_v3_projects?owner_email=eq.${enc(ownerEmail)}&order=created_at.desc&limit=100`,
