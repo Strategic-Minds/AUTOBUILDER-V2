@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run validate:release && npm run build:next",
+    "build:next": "next build",
     "start": "next start",
     "lint": "biome lint app components lib packages scripts tests e2e",
     "test": "vitest run",
@@ -15,7 +16,9 @@
     "test:unit": "vitest run tests/unit",
     "adapters:run-all": "tsx scripts/run_all_adapters.ts",
     "scorecard": "tsx scripts/scorecard.ts",
-    "validate:security": "tsx scripts/validate-security.ts"
+    "validate:security": "tsx scripts/validate-security.ts",
+    "validate:migration": "node scripts/validate-migration.mjs",
+    "validate:release": "npm audit --audit-level=high && npm run validate:security && npm run lint && npm run test:unit && npx tsc --noEmit && npm run validate:migration && npm run scorecard"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.7",
