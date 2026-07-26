@@ -10,7 +10,7 @@
     "build:next": "next build",
     "start": "next start",
     "lint": "biome lint app components lib packages scripts tests e2e",
-    "lint:release": "biome lint app/factory app/api/factory app/api/cron/auto-builder app/api/cron/factory app/api/gpt-bridge lib/factory lib/internal-auth.ts lib/api-auth.ts packages/security scripts/validate-security.ts scripts/validate-migration.mjs tests/unit e2e/critical-journeys.spec.ts",
+    "lint:release": "biome lint --max-diagnostics=100 app/factory app/api/factory app/api/cron/auto-builder app/api/cron/factory app/api/gpt-bridge lib/factory lib/internal-auth.ts lib/api-auth.ts packages/security scripts/validate-security.ts scripts/validate-migration.mjs tests/unit e2e/critical-journeys.spec.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
