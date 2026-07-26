@@ -1,51 +1,63 @@
 import { describe, expect, it } from 'vitest'
 import { buildGeneratedSiteFiles, slugifyProject } from '@/lib/factory/site-generator'
 
-describe('Xtreme AI Builder generated site contract', () => {
-  it('creates a complete responsive PWA project from approved packs', () => {
+describe('Xtreme AI Builder generated system contract', () => {
+  it('creates a persistent responsive production PWA from approved packs', () => {
     const files = buildGeneratedSiteFiles({
-      projectId: 'AUTOBUILDER_GOLDEN_PATH_TEST',
-      projectName: 'Golden Path Test Company',
-      clientName: 'Golden Path Test Company',
-      industry: 'Epoxy Flooring',
-      region: 'Phoenix, Arizona',
-      services: 'Garage floor coatings, Metallic epoxy, Polished concrete',
-      brief: 'Premium white, black, brushed silver, and restrained metallic gold.',
+      projectId: 'clean-room-project-id',
+      projectName: 'XAB_CLEAN_ROOM_PROOF_20260726',
+      clientName: 'ProofFlow Operations',
+      industry: 'Small-business operations and project-intake platform',
+      region: 'Neutral clean-room test',
+      services: 'Project intake, Status tracking, Search and filtering, Operational visibility',
+      brief: 'Prove complete idea-to-production generation with durable data and browser evidence.',
       approvedBrand: {
         config: {
-          positioning: 'Phoenix floors engineered to perform beautifully',
-          palette: ['#FFFFFF', '#111111', '#D4AF37'],
-          voice: 'Confident and precise',
+          positioning: 'Turn every new request into an organized, trackable project.',
+          palette: ['#F5F6F8', '#101114', '#D4AF37'],
+          voice: 'Clear and decisive',
         },
       },
       approvedWebsite: {
         config: {
-          layout: 'Premium lead-generation funnel',
-          sections: ['Hero', 'Services', 'Process', 'Gallery', 'FAQ', 'Contact'],
+          layout: 'Premium operations command center',
+          sections: ['Hero', 'Capabilities', 'Workflow', 'Proof', 'Intake'],
         },
       },
     })
 
     expect(Object.keys(files)).toEqual(expect.arrayContaining([
       'package.json',
+      'next.config.mjs',
       'app/layout.tsx',
       'app/page.tsx',
-      'app/globals.css',
+      'app/dashboard/page.tsx',
+      'app/projects/[id]/page.tsx',
+      'app/privacy/page.tsx',
+      'app/offline/page.tsx',
+      'app/api/intake/route.ts',
+      'app/api/projects/route.ts',
       'app/api/health/route.ts',
+      'lib/proof-server.ts',
       'public/manifest.webmanifest',
       'public/sw.js',
+      'tests/contract.test.mjs',
       'README.md',
     ]))
-    expect(files['app/page.tsx']).toContain('Garage floor coatings')
-    expect(files['app/page.tsx']).toContain('localStorage.setItem')
-    expect(files['app/page.tsx']).toContain('Production locked')
-    expect(files['app/globals.css']).toContain('@media(max-width:900px)')
-    expect(JSON.parse(files['package.json']).scripts.build).toBe('next build')
+    expect(files['app/page.tsx']).toContain("fetch('/api/intake'")
+    expect(files['app/api/intake/route.ts']).toContain('xab_clean_room_intakes')
+    expect(files['app/api/projects/route.ts']).toContain('operatorAuthorized')
+    expect(files['app/dashboard/page.tsx']).toContain('Search projects')
+    expect(files['app/page.tsx']).not.toContain('localStorage.setItem')
+    expect(files['app/page.tsx']).not.toContain('Production locked')
+    expect(files['app/globals.css']).toContain('@media(max-width:960px)')
+    expect(JSON.parse(files['package.json']).scripts.build).toContain('npm run validate')
     expect(JSON.parse(files['public/manifest.webmanifest']).display).toBe('standalone')
+    expect(JSON.parse(files['public/manifest.webmanifest']).icons).toHaveLength(2)
   })
 
   it('creates deterministic safe repository slugs', () => {
-    expect(slugifyProject('Golden Path Test Company!')).toBe('golden-path-test-company')
+    expect(slugifyProject('XAB Clean Room Proof!')).toBe('xab-clean-room-proof')
     expect(slugifyProject('***')).toBe('generated-project')
   })
 })
