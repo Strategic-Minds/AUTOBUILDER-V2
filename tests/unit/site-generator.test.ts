@@ -45,11 +45,12 @@ describe('Xtreme AI Builder generated system contract', () => {
       'README.md',
     ]))
     expect(files['app/page.tsx']).toContain("fetch('/api/intake'")
-    expect(files['app/api/intake/route.ts']).toContain('xab_clean_room_intakes')
+    expect(files['app/api/intake/route.ts']).toContain('xab_xab_clean_room_proof_20260726_intakes')
     expect(files['app/api/projects/route.ts']).toContain('operatorAuthorized')
     expect(files['app/dashboard/page.tsx']).toContain('Search projects')
     expect(files['app/page.tsx']).not.toContain('localStorage.setItem')
     expect(files['app/page.tsx']).not.toContain('Production locked')
+    expect(files['app/api/intake/route.ts']).not.toContain('xab_clean_room_intakes')
     expect(files['app/globals.css']).toContain('@media(max-width:960px)')
     expect(JSON.parse(files['package.json']).scripts.build).toContain('npm run validate')
     expect(JSON.parse(files['public/manifest.webmanifest']).display).toBe('standalone')
