@@ -1,7 +1,6 @@
 {
   "crons": [
     { "path": "/api/cron/auto-builder", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/factory", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/enterprise-kernel", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/quality-auto-heal", "schedule": "*/15 * * * *" },
     { "path": "/api/cron/intelligence-ingest", "schedule": "0 * * * *" }
