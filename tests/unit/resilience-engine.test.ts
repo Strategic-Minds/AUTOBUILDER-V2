@@ -9,7 +9,7 @@ afterEach(() => {
   else process.env.VERCEL_ENV = originalVercelEnv
 })
 
-describe('XAB Resilience OS engine', () => {
+describe('Xtreme AI Builder validation engine', () => {
   it('classifies source-truth, database, and viewport failures', () => {
     expect(classifyFailure('Workbook checksum and deployment commit mismatch')).toBe('source_truth')
     expect(classifyFailure('Supabase RLS policy missing')).toBe('database')
