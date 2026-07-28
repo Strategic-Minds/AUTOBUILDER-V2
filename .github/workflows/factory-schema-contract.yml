@@ -1,0 +1,92 @@
+name: Factory Schema Contract
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20260728062000_factory_quality_schema_contract.sql'
+      - 'supabase/rollback/20260728062000_factory_quality_schema_contract.down.sql'
+      - 'supabase/validation/**'
+      - '.github/workflows/factory-schema-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migration-rollback-reapply:
+    name: Apply, verify, rollback, and reapply
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: factory_validation
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d factory_validation"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: factory_validation
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGOPTIONS: '-c client_min_messages=warning'
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Verify PostgreSQL
+        run: psql --version && pg_isready
+
+      - name: Create production-compatible baseline
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_baseline.sql
+
+      - name: Apply reviewed migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260728062000_factory_quality_schema_contract.sql
+
+      - name: Verify migrated structure
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_structure_assertions.sql
+
+      - name: Verify migrated RLS and privileges
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_security_assertions.sql
+
+      - name: Verify service-role write contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_write_assertions.sql
+
+      - name: Execute reviewed rollback
+        run: psql -v ON_ERROR_STOP=1 -f supabase/rollback/20260728062000_factory_quality_schema_contract.down.sql
+
+      - name: Verify rollback restoration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_rollback_assertions.sql
+
+      - name: Reapply migration after rollback
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260728062000_factory_quality_schema_contract.sql
+
+      - name: Verify repeatable final structure
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_structure_assertions.sql
+
+      - name: Verify repeatable final security
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_security_assertions.sql
+
+      - name: Verify repeatable final writes
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_write_assertions.sql
+
+      - name: Emit receipt summary
+        run: |
+          echo 'FACTORY_SCHEMA_CONTRACT=PASS'
+          echo 'ISOLATED_DATABASE=postgres:16'
+          echo 'FORWARD_MIGRATION=PASS'
+          echo 'ACCESS_MODEL=PASS'
+          echo 'ROLLBACK=PASS'
+          echo 'REAPPLY=PASS'
+          echo 'PRODUCTION_MUTATION=false'
