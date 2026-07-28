@@ -2,7 +2,7 @@
 
 ## Status
 
-Branch and sandbox only. Production remains locked.
+Production-first and validation-gated. Preview is an intermediate validation stage, not the final destination.
 
 ## Canonical template
 
@@ -12,6 +12,7 @@ Branch and sandbox only. Production remains locked.
 - Isolated proof repository: `Strategic-Minds/UNIVERSAL-AUTONOMOUS-CODING-SYSTEM-SANDBOX`
 - Independent validator: `Strategic-Minds/BROWSERWORKER`
 - Preview boundary: Vercel project `uacs-autonomous-sandbox`
+- Default final destination: validated Vercel production release
 
 ## Read-only rule
 
@@ -23,7 +24,7 @@ Changes to the template itself require:
 2. A draft pull request.
 3. Validation receipts.
 4. BrowserWorker evidence when UI behavior changes.
-5. Explicit operator approval before protected-branch merge.
+5. A release receipt before protected-branch merge and production promotion.
 
 ## Provisioning rule
 
@@ -37,6 +38,7 @@ Every generated system receives its own durable identity:
 - Base44 registry record
 - approval-manifest SHA-256
 - validation, repair, rollback, and release receipts
+- production deployment after every mandatory gate passes
 
 ## Approval lock
 
@@ -52,8 +54,8 @@ The five-minute Vercel control loop runs:
 4. Auto-harden security scan
 5. Independent validation
 
-The loop is bounded to five repair iterations. It cannot merge protected branches, deploy production, alter secrets, change DNS, spend money, contact customers, publish content, or perform destructive operations.
+The loop is bounded to five repair iterations. It cannot alter secrets, change DNS, spend money, contact customers, publish social content, execute unapproved production database migrations, or perform destructive operations.
 
 ## Release policy
 
-A generated project remains preview-only until all mandatory evidence exists. Missing evidence is a failed gate, not a warning.
+A generated project remains in preview only while mandatory evidence is incomplete. Once build, security, BrowserWorker desktop/tablet/mobile, operational parity, smoke-test, rollback, and release receipts pass, the default next action is protected-branch merge and production promotion. Missing evidence is a failed gate, not a warning.
