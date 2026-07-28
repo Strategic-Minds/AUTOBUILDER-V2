@@ -54,8 +54,14 @@ jobs:
       - name: Apply reviewed migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260728062000_factory_quality_schema_contract.sql
 
-      - name: Verify migrated schema and access model
-        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_assertions.sql
+      - name: Verify migrated structure
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_structure_assertions.sql
+
+      - name: Verify migrated RLS and privileges
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_security_assertions.sql
+
+      - name: Verify service-role write contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_write_assertions.sql
 
       - name: Execute reviewed rollback
         run: psql -v ON_ERROR_STOP=1 -f supabase/rollback/20260728062000_factory_quality_schema_contract.down.sql
@@ -66,8 +72,14 @@ jobs:
       - name: Reapply migration after rollback
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260728062000_factory_quality_schema_contract.sql
 
-      - name: Verify repeatable final state
-        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_assertions.sql
+      - name: Verify repeatable final structure
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_structure_assertions.sql
+
+      - name: Verify repeatable final security
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_security_assertions.sql
+
+      - name: Verify repeatable final writes
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260728062000_factory_quality_write_assertions.sql
 
       - name: Emit receipt summary
         run: |
