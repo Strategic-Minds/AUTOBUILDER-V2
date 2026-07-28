@@ -39,7 +39,10 @@ begin
       raise exception 'authenticated retains access: %', table_name;
     end if;
 
-    if not has_table_privilege('service_role', 'public.' || table_name, 'SELECT,INSERT,UPDATE,DELETE') then
+    if not has_table_privilege('service_role', 'public.' || table_name, 'SELECT')
+      or not has_table_privilege('service_role', 'public.' || table_name, 'INSERT')
+      or not has_table_privilege('service_role', 'public.' || table_name, 'UPDATE')
+      or not has_table_privilege('service_role', 'public.' || table_name, 'DELETE') then
       raise exception 'service_role lacks required access: %', table_name;
     end if;
   end loop;
