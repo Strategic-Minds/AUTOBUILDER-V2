@@ -5,6 +5,7 @@ import { run as paymentGate } from '../workers/adapters/payment-gate'
 import { run as whatsappSync } from '../workers/adapters/whatsapp-sync'
 import { run as social } from '../workers/adapters/social'
 import { run as qualityScan } from '../workers/adapters/quality-scan'
+import { run as autoReflect } from '../workers/adapters/auto-reflect'
 import { run as autoFix } from '../workers/adapters/auto-fix'
 import { run as autoHeal } from '../workers/adapters/auto-heal'
 import { run as autoHarden } from '../workers/adapters/auto-harden'
@@ -19,6 +20,7 @@ const ADAPTERS: { name: string; fn: () => Promise<unknown> }[] = [
   { name: 'whatsapp-sync', fn: whatsappSync },
   { name: 'social', fn: social },
   { name: 'quality-scan', fn: qualityScan },
+  { name: 'auto-reflect', fn: autoReflect },
   { name: 'auto-fix', fn: autoFix },
   { name: 'auto-heal', fn: autoHeal },
   { name: 'auto-harden', fn: autoHarden },
