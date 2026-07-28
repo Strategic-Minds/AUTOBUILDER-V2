@@ -34,10 +34,10 @@ export const dynamic = 'force-dynamic'
 /**
  * Canonical Xtreme AI Builder provider adapter.
  *
- * Accepts the XAB universal MCP handoff, validates that protected actions stay
- * blocked, and creates a durable XAB v3 project/queue record. It never deploys
- * production, mutates secrets, changes DNS, sends customer messages, or merges
- * protected branches. Downstream work remains branch/sandbox only.
+ * Accepts the XAB universal MCP handoff, verifies the immutable approval lock,
+ * validates that protected actions stay blocked, and creates a durable XAB v3
+ * project/queue record. It never deploys production, mutates secrets, changes
+ * DNS, sends customer messages, or merges protected branches.
  */
 export async function POST(request: NextRequest) {
   const auth = authorizeInternalRequest(request, 'agents:dispatch')
@@ -81,6 +81,14 @@ export async function POST(request: NextRequest) {
   }
 
   const mode = text(args.mode, 'dry_run')
+  const approvalManifestSha256 = text(buildRequest.approvalManifestSha256)
+  const approvedIdeaRef = text(buildRequest.approvedIdeaRef)
+  const approvedLogoRef = text(buildRequest.approvedLogoRef)
+  const approvedBrandRef = text(buildRequest.approvedBrandRef)
+  const approvedWorkflowRef = text(buildRequest.approvedWorkflowRef)
+  const approvedVisualRefs = strings(buildRequest.approvedVisualRefs)
+  const sourceTruthRefs = strings(buildRequest.sourceTruthRefs)
+
   const plan = {
     adapter: 'xtreme_ai_builder',
     authority: 'Xtreme AI Builder MCP',
@@ -89,6 +97,7 @@ export async function POST(request: NextRequest) {
     validator: 'BrowserWorker',
     project_id: projectId,
     correlation_id: text(packet.correlationId),
+    approval_manifest_sha256: approvalManifestSha256 || null,
     actions,
     blocked_actions: [...BLOCKED_ACTIONS],
     production_mutation: false,
@@ -99,12 +108,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, state: 'DRY_RUN_VALIDATED', plan })
   }
 
+  const missingApprovalInputs = [
+    ['approvedIdeaRef', approvedIdeaRef],
+    ['approvedLogoRef', approvedLogoRef],
+    ['approvedBrandRef', approvedBrandRef],
+    ['approvedWorkflowRef', approvedWorkflowRef],
+    ['approvalManifestSha256', approvalManifestSha256],
+    ['approvedVisualRefs', approvedVisualRefs.length ? 'present' : ''],
+    ['sourceTruthRefs', sourceTruthRefs.length ? 'present' : ''],
+  ].filter(([, value]) => !value).map(([field]) => field)
+
+  if (missingApprovalInputs.length > 0 || !/^[a-f0-9]{64}$/.test(approvalManifestSha256)) {
+    return NextResponse.json({
+      ok: false,
+      state: 'BLOCKED_APPROVAL_MANIFEST_REQUIRED',
+      missing: missingApprovalInputs,
+      invalid_manifest_hash: approvalManifestSha256 ? !/^[a-f0-9]{64}$/.test(approvalManifestSha256) : false,
+      production_mutation: false,
+    }, { status: 422 })
+  }
+
   const requiredCapabilities = strings(buildRequest.requiredCapabilities)
   const integrations = strings(buildRequest.integrations)
-  const sourceTruthRefs = strings(buildRequest.sourceTruthRefs)
   const constraints = strings(buildRequest.constraints)
-  const visualRefs = strings(buildRequest.approvedVisualRefs)
-  const brandRef = text(buildRequest.approvedBrandRef)
 
   const project = await createProject(
     {
@@ -116,9 +142,13 @@ export async function POST(request: NextRequest) {
       brief: [
         objective,
         `Build mode: ${text(buildRequest.mode, 'mvp')}`,
-        `Approved brand: ${brandRef || 'pending in approval queue'}`,
-        `Approved visuals: ${visualRefs.join(', ') || 'pending in approval queue'}`,
-        `Source truth: ${sourceTruthRefs.join(', ') || 'XAB packet'}`,
+        `Approved idea: ${approvedIdeaRef}`,
+        `Approved logo: ${approvedLogoRef}`,
+        `Approved brand: ${approvedBrandRef}`,
+        `Approved workflow: ${approvedWorkflowRef}`,
+        `Approved visuals: ${approvedVisualRefs.join(', ')}`,
+        `Approval manifest SHA-256: ${approvalManifestSha256}`,
+        `Source truth: ${sourceTruthRefs.join(', ')}`,
         `Constraints: ${constraints.join('; ') || 'branch and sandbox only'}`,
       ].join('\n'),
     },
@@ -127,13 +157,14 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    state: 'QUEUED_FOR_BRAND_APPROVAL',
+    state: 'QUEUED_FOR_CANONICAL_BUILD_PIPELINE',
     project,
     plan,
     receipt: {
       type: 'xtreme_ai_builder_provider_dispatch',
       request_id: auth.request_id,
       correlation_id: auth.correlation_id,
+      approval_manifest_sha256: approvalManifestSha256,
       production_mutation: false,
     },
   }, { status: 202 })
