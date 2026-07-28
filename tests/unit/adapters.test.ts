@@ -82,6 +82,24 @@ describe('Adapters and Hardening Tests', () => {
     })
   })
 
+  it('schema drift: missing PostgREST column becomes a blocked dependency', async () => {
+    const { normalizeSchemaDriftResult } = await import('../../workers/adapters/schema-drift')
+    const normalized = normalizeSchemaDriftResult({
+      status: 'error',
+      errors: ["Could not find the 'finding_id' column of 'factory_repair_jobs' in the schema cache"],
+      details: {},
+    })
+
+    expect(normalized.status).toBe('blocked')
+    expect(normalized.errors).toEqual([])
+    expect(normalized.details).toMatchObject({
+      reason: 'schema_dependency_missing',
+      missing_columns: ['factory_repair_jobs.finding_id'],
+      migration_required: true,
+      production_mutation: false,
+    })
+  })
+
   it('schema drift: unrelated adapter errors remain errors', async () => {
     const { normalizeSchemaDriftResult } = await import('../../workers/adapters/schema-drift')
     const original = { status: 'error', errors: ['network timeout'], details: {} }
