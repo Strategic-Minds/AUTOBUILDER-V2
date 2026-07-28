@@ -16,18 +16,19 @@ export type AdapterContext = {
 }
 
 /**
- * Every adapter run gets wrapped: idempotency-safe, always writes a receipt
- * to factory_receipts, never throws past this boundary (errors are captured
- * and returned so callers/cron get a structured result instead of a 500).
+ * Every adapter run is wrapped so callers receive a structured result and the
+ * existing factory_receipts table receives a durable, schema-compatible
+ * receipt. Receipt failure never masks the adapter result, but it is surfaced
+ * in details for the controller and operator.
  */
 export async function runAdapter(
   adapterName: string,
   fn: (ctx: AdapterContext) => Promise<Omit<AdapterResult, 'adapter' | 'dry_run'>>,
-  opts: { limit?: number } = {}
+  opts: { limit?: number } = {},
 ): Promise<AdapterResult> {
   const dryRun = isDryRun()
   const ctx: AdapterContext = { limit: opts.limit ?? 10, dryRun }
-  const startedAt = new Date().toISOString()
+  const startedAt = new Date()
 
   let result: Omit<AdapterResult, 'adapter' | 'dry_run'>
   try {
@@ -43,25 +44,36 @@ export async function runAdapter(
   }
 
   const full: AdapterResult = { adapter: adapterName, dry_run: dryRun, ...result }
-
   await writeReceipt(adapterName, full, startedAt)
   return full
 }
 
-async function writeReceipt(adapterName: string, result: AdapterResult, startedAt: string) {
-  try {
-    const supabase = getServiceClient()
-    await supabase.from('factory_receipts').insert({
-      receipt_id: `${adapterName}_${startedAt}_${Math.random().toString(36).slice(2, 8)}`,
-      action: `adapter_run:${adapterName}`,
-      status: result.status,
-      payload: { ...result, started_at: startedAt },
+export function buildFactoryReceipt(adapterName: string, result: AdapterResult, startedAt: Date) {
+  const finishedAt = new Date()
+  return {
+    receipt_id: `${adapterName}_${startedAt.toISOString()}_${Math.random().toString(36).slice(2, 8)}`,
+    receipt_type: 'adapter_run',
+    status: result.status,
+    produced_by: 'base44_superagent',
+    action_summary: `adapter_run:${adapterName}`,
+    evidence: {
+      ...result,
+      started_at: startedAt.toISOString(),
+      finished_at: finishedAt.toISOString(),
       production_mutated: false,
       execution_mode: result.dry_run ? 'dry_run' : 'live',
-      caller_agent: 'base44_superagent',
-    })
+    },
+    rollback_available: false,
+    duration_ms: Math.max(0, finishedAt.getTime() - startedAt.getTime()),
+  }
+}
+
+async function writeReceipt(adapterName: string, result: AdapterResult, startedAt: Date) {
+  try {
+    const supabase = getServiceClient()
+    const { error } = await supabase.from('factory_receipts').insert(buildFactoryReceipt(adapterName, result, startedAt))
+    if (error) result.details.receipt_write_error = error.message
   } catch (err) {
-    // Receipt failure must never crash the adapter run itself; surface it in details.
     result.details.receipt_write_error = err instanceof Error ? err.message : String(err)
   }
 }
@@ -74,7 +86,7 @@ export async function withRetry<T>(fn: () => Promise<T>, attempts = 3, delayMs =
       return await fn()
     } catch (err) {
       lastErr = err
-      if (i < attempts - 1) await new Promise((r) => setTimeout(r, delayMs * (i + 1)))
+      if (i < attempts - 1) await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)))
     }
   }
   throw lastErr
