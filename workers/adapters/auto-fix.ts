@@ -7,6 +7,7 @@ type Finding = {
   category: string | null
   severity: string | null
   fix_recipe: unknown
+  description?: string | null
 }
 
 type ExistingRepair = {
@@ -19,15 +20,15 @@ const TERMINAL_REPAIR_STATES = new Set(['completed', 'cancelled', 'superseded', 
 
 /**
  * Turns auto-fixable findings into deterministic, reviewable repair recipes.
- * This adapter never edits source code, deploys, merges, changes secrets, or
- * mutates production. A separate evidence-driven repair route must apply an
- * approved patch on a branch and independent validation must pass afterward.
+ * The insert is compatible with the existing factory_repair_jobs contract and
+ * the additive quality-schema migration. It never edits source, deploys,
+ * merges, changes secrets, or mutates a production application.
  */
 export async function runAutoFix(ctx: AdapterContext) {
   const supabase = getServiceClient()
   const { data: findings, error } = await supabase
     .from('factory_quality_findings')
-    .select('id,project_id,category,severity,fix_recipe')
+    .select('id,project_id,category,severity,fix_recipe,description')
     .eq('auto_fixable', true)
     .eq('fix_applied', false)
     .order('created_at', { ascending: true })
@@ -67,11 +68,16 @@ export async function runAutoFix(ctx: AdapterContext) {
       continue
     }
 
+    const category = finding.category || 'general'
     const repair = {
       repair_id: `fix_${finding.id}`,
       project_id: finding.project_id,
       finding_id: finding.id,
-      repair_type: finding.category || 'general',
+      repair_type: category,
+      failure_fingerprint: `quality_finding:${finding.id}`,
+      defect_description: finding.description || `${category} quality finding ${finding.id}`,
+      repair_strategy: 'deterministic_reviewable_recipe',
+      assigned_agent: 'base44_superagent',
       status: 'recipe_ready',
       recipe: {
         fix_recipe: finding.fix_recipe || 'manual_evidence_required',
@@ -79,6 +85,11 @@ export async function runAutoFix(ctx: AdapterContext) {
         execution_boundary: 'branch_only',
         independent_validation_required: true,
         production_mutation_allowed: false,
+      },
+      evidence: {
+        source: 'factory_quality_findings',
+        finding_id: finding.id,
+        production_mutation: false,
       },
     }
 
