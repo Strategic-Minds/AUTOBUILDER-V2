@@ -4,9 +4,7 @@ import { createProject } from '@/lib/factory/xab-v3-store'
 
 type JsonRecord = Record<string, unknown>
 
-const BLOCKED_ACTIONS = new Set([
-  'production_deploy',
-  'merge_protected_branch',
+const ALWAYS_BLOCKED_ACTIONS = new Set([
   'production_database_migration',
   'secret_or_environment_mutation',
   'domain_or_dns_change',
@@ -35,9 +33,10 @@ export const dynamic = 'force-dynamic'
  * Canonical Xtreme AI Builder provider adapter.
  *
  * Accepts the XAB universal MCP handoff, verifies the immutable approval lock,
- * validates that protected actions stay blocked, and creates a durable XAB v3
- * project/queue record. It never deploys production, mutates secrets, changes
- * DNS, sends customer messages, or merges protected branches.
+ * validates the standing safety contract, and creates a durable XAB v3
+ * project/queue record. Production is the default final destination, but this
+ * adapter does not deploy directly. Promotion occurs only after mandatory
+ * validation, BrowserWorker, smoke-test, rollback, and release receipts exist.
  */
 export async function POST(request: NextRequest) {
   const auth = authorizeInternalRequest(request, 'agents:dispatch')
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
   const buildRequest = record(packet.request)
   const actions = strings(args.actions)
   const requestedBlockedActions = strings(args.blocked_actions)
-  const missingBlockedActions = [...BLOCKED_ACTIONS].filter((action) => !requestedBlockedActions.includes(action))
+  const missingBlockedActions = [...ALWAYS_BLOCKED_ACTIONS].filter((action) => !requestedBlockedActions.includes(action))
 
   if (missingBlockedActions.length > 0) {
     return NextResponse.json(
@@ -88,6 +87,7 @@ export async function POST(request: NextRequest) {
   const approvedWorkflowRef = text(buildRequest.approvedWorkflowRef)
   const approvedVisualRefs = strings(buildRequest.approvedVisualRefs)
   const sourceTruthRefs = strings(buildRequest.sourceTruthRefs)
+  const finalDestination = text(buildRequest.releaseTarget, 'production')
 
   const plan = {
     adapter: 'xtreme_ai_builder',
@@ -99,9 +99,22 @@ export async function POST(request: NextRequest) {
     correlation_id: text(packet.correlationId),
     approval_manifest_sha256: approvalManifestSha256 || null,
     actions,
-    blocked_actions: [...BLOCKED_ACTIONS],
+    blocked_actions: [...ALWAYS_BLOCKED_ACTIONS],
     production_mutation: false,
-    promotion_policy: 'draft_pr_only',
+    preview_role: 'intermediate_validation_stage',
+    final_destination: finalDestination,
+    promotion_policy: 'production_after_mandatory_evidence',
+    mandatory_release_receipts: [
+      'build',
+      'security',
+      'browserworker_desktop',
+      'browserworker_tablet',
+      'browserworker_mobile',
+      'operational_parity',
+      'smoke_test',
+      'rollback',
+      'release',
+    ],
   }
 
   if (mode === 'dry_run' || buildRequest.execute !== true) {
@@ -149,7 +162,9 @@ export async function POST(request: NextRequest) {
         `Approved visuals: ${approvedVisualRefs.join(', ')}`,
         `Approval manifest SHA-256: ${approvalManifestSha256}`,
         `Source truth: ${sourceTruthRefs.join(', ')}`,
-        `Constraints: ${constraints.join('; ') || 'branch and sandbox only'}`,
+        `Final destination: ${finalDestination}`,
+        `Promotion policy: production after mandatory evidence`,
+        `Constraints: ${constraints.join('; ') || 'validation-gated production-first release'}`,
       ].join('\n'),
     },
     text(buildRequest.requestedBy, 'Jeremy Bensen'),
@@ -165,6 +180,7 @@ export async function POST(request: NextRequest) {
       request_id: auth.request_id,
       correlation_id: auth.correlation_id,
       approval_manifest_sha256: approvalManifestSha256,
+      final_destination: finalDestination,
       production_mutation: false,
     },
   }, { status: 202 })
