@@ -36,10 +36,10 @@ describe('Adapters and Hardening Tests', () => {
     expect(findings.length).toBe(0);
   });
 
-  it('all 12 adapters export a callable run()', async () => {
+  it('all 13 adapters export a callable run()', async () => {
     const names = [
       'content-gen', 'seo', 'image-queue', 'payment-gate', 'whatsapp-sync', 'social',
-      'quality-scan', 'auto-fix', 'auto-heal', 'auto-harden', 'competitor-intel', 'template-intel',
+      'quality-scan', 'auto-reflect', 'auto-fix', 'auto-heal', 'auto-harden', 'competitor-intel', 'template-intel',
     ];
     for (const name of names) {
       const mod = await import(`../../workers/adapters/${name}`);

@@ -1,0 +1,73 @@
+{
+  "schema": "strategic-minds.autonomous-coding-template.v1",
+  "status": "production_first_validation_gated",
+  "operator_authority": "Jeremy Bensen",
+  "command_authority": {
+    "system": "XAB",
+    "repository": "Strategic-Minds/XAB",
+    "mcp_namespace": "Xtreme_AI_Builder"
+  },
+  "execution_runtime": {
+    "system": "AUTOBUILDER-V2",
+    "repository": "Strategic-Minds/AUTOBUILDER-V2",
+    "role": "subordinate receipt-producing executor"
+  },
+  "canonical_template": {
+    "repository": "Strategic-Minds/UNIVERSAL-AUTONOMOUS-CODING-SYSTEM",
+    "sandbox_repository": "Strategic-Minds/UNIVERSAL-AUTONOMOUS-CODING-SYSTEM-SANDBOX",
+    "vercel_project": "uacs-autonomous-sandbox",
+    "mutation_policy": "copy_or_branch_generated_output_only",
+    "canonical_main_policy": "read_only_for_factory_jobs"
+  },
+  "validator": {
+    "repository": "Strategic-Minds/BROWSERWORKER",
+    "desktop_required": true,
+    "tablet_required": true,
+    "mobile_required": true,
+    "visual_parity_each_breakpoint": 99,
+    "operational_parity": 100,
+    "max_repair_iterations": 5
+  },
+  "approval_lock": {
+    "schema": "xab.approval-manifest.v1",
+    "algorithm": "sha256",
+    "required_inputs": [
+      "approved idea",
+      "approved logo",
+      "approved brand pack",
+      "approved visual reference",
+      "approved workflow",
+      "source truth"
+    ]
+  },
+  "release_policy": {
+    "preview_role": "intermediate_validation_stage",
+    "default_final_destination": "production",
+    "promotion_mode": "automatic_after_mandatory_evidence",
+    "required_receipts": [
+      "build",
+      "security",
+      "browserworker_desktop",
+      "browserworker_tablet",
+      "browserworker_mobile",
+      "operational_parity",
+      "smoke_test",
+      "rollback",
+      "release"
+    ]
+  },
+  "cron": {
+    "provider": "Vercel Cron",
+    "schedule": "*/5 * * * *",
+    "loops": ["dispatch", "base44 sync", "auto-reflect/fix/heal/harden", "resilience"]
+  },
+  "separately_approved_actions": [
+    "production database migration",
+    "secret mutation",
+    "DNS change",
+    "paid resource creation",
+    "customer messaging",
+    "live social publishing",
+    "destructive action"
+  ]
+}

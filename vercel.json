@@ -2,9 +2,7 @@
   "crons": [
     { "path": "/api/cron/auto-builder", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/base44-bridge", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/enterprise-kernel", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/quality-auto-heal", "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/resilience", "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/intelligence-ingest", "schedule": "0 * * * *" }
+    { "path": "/api/cron/quality-auto-heal", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/resilience", "schedule": "*/5 * * * *" }
   ]
 }
