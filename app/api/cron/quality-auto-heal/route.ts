@@ -46,18 +46,28 @@ export async function GET(req: NextRequest) {
   }
 
   const normalizedResults = Object.entries(results).map(([adapter, result]) => {
-    const typed = result as { status?: unknown; details?: { missing_relations?: unknown } }
+    const typed = result as {
+      status?: unknown
+      details?: { missing_relations?: unknown; missing_columns?: unknown }
+    }
     const missingRelations = Array.isArray(typed.details?.missing_relations)
       ? typed.details.missing_relations.filter((value): value is string => typeof value === 'string')
+      : []
+    const missingColumns = Array.isArray(typed.details?.missing_columns)
+      ? typed.details.missing_columns.filter((value): value is string => typeof value === 'string')
       : []
     return {
       adapter,
       status: String(typed.status || 'unknown'),
       missing_relations: missingRelations,
+      missing_columns: missingColumns,
     }
   })
   const states = normalizedResults.map((result) => result.status)
-  const missingSchemaDependencies = [...new Set(normalizedResults.flatMap((result) => result.missing_relations))]
+  const missingSchemaDependencies = [...new Set(normalizedResults.flatMap((result) => [
+    ...result.missing_relations,
+    ...result.missing_columns,
+  ]))]
   const ok = !states.includes('error')
   const state = ok
     ? (states.includes('blocked') ? 'BLOCKED_SCHEMA_OR_REPAIR_REQUIRED' : 'CYCLE_COMPLETE')
