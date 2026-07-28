@@ -106,7 +106,9 @@ insert into public.xab_v3_template_systems (
     'command_authority', 'Strategic-Minds/XAB',
     'executor', 'Strategic-Minds/AUTOBUILDER-V2',
     'validator', 'Strategic-Minds/BROWSERWORKER',
-    'production_locked', true,
+    'production_default', true,
+    'preview_role', 'intermediate_validation_stage',
+    'promotion_policy', 'production_after_mandatory_evidence',
     'visual_parity_each_breakpoint', 99,
     'operational_parity', 100
   ),
