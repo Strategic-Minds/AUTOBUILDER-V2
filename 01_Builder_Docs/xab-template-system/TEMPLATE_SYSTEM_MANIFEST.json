@@ -1,6 +1,6 @@
 {
   "schema": "strategic-minds.autonomous-coding-template.v1",
-  "status": "branch_and_sandbox_only",
+  "status": "production_first_validation_gated",
   "operator_authority": "Jeremy Bensen",
   "command_authority": {
     "system": "XAB",
@@ -40,20 +40,34 @@
       "source truth"
     ]
   },
+  "release_policy": {
+    "preview_role": "intermediate_validation_stage",
+    "default_final_destination": "production",
+    "promotion_mode": "automatic_after_mandatory_evidence",
+    "required_receipts": [
+      "build",
+      "security",
+      "browserworker_desktop",
+      "browserworker_tablet",
+      "browserworker_mobile",
+      "operational_parity",
+      "smoke_test",
+      "rollback",
+      "release"
+    ]
+  },
   "cron": {
     "provider": "Vercel Cron",
     "schedule": "*/5 * * * *",
     "loops": ["dispatch", "base44 sync", "auto-reflect/fix/heal/harden", "resilience"]
   },
-  "blocked_actions": [
-    "production deploy",
-    "protected branch merge",
+  "separately_approved_actions": [
     "production database migration",
     "secret mutation",
     "DNS change",
     "paid resource creation",
     "customer messaging",
-    "live publishing",
+    "live social publishing",
     "destructive action"
   ]
 }
