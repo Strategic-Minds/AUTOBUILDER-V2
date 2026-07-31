@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "system_id": "xtreme-ai-builder",
+  "product_name": "Xtreme AI Builder",
+  "verified_at": "2026-07-31T05:15:00Z",
+  "authority": {
+    "canonical_repository": "Strategic-Minds/AUTOBUILDER-V2",
+    "canonical_default_branch": "main",
+    "active_consolidation_branch": "feature/application-factory-adapter-20260728",
+    "active_pull_request": 58,
+    "operator_application_vercel_project_id": "prj_YSIPjYnM4KtbsiQsVVLHQ5A3AVWe",
+    "control_plane_repository": "XTREME-SYSTEMS/factory-control-plane",
+    "control_plane_branch": "factory/repeatable-application-mcp-20260728",
+    "control_plane_pull_request": 9,
+    "control_plane_vercel_project_id": "prj_XCNftWPDtJvJYrPikqrL0AvPUJJy",
+    "browserworker_repository": "Strategic-Minds/BROWSERWORKER",
+    "browserworker_vercel_project_id": "prj_XLXGylKrFpIGK7GVGpeSfWwV7qzo",
+    "supabase_project_ref": "azajysheebfhyzoyplpf",
+    "base44_app_id": "6a4ae522852a5e08bfa42450",
+    "drive_mission_index_id": "15QX08Ei75QpPYXPoPt77tGi_CKObD-JgifkGU9-rkdY",
+    "drive_mission_workspace_id": "1SiaZCj2xFq4gOIh8ZW2pleas-BzMA-tk",
+    "ui_migration_source": "Strategic-Minds/XAB",
+    "template_library": "Strategic-Minds/UNIVERSAL-AUTONOMOUS-CODING-SYSTEM"
+  },
+  "roles": {
+    "AUTOBUILDER-V2": "canonical application, orchestration runtime, operator dashboard, release gates and evidence adapter",
+    "factory-control-plane": "private MCP and five-minute governed dispatcher",
+    "BROWSERWORKER": "independent browser execution and validation service",
+    "XAB": "temporary approved UI and feature donor only",
+    "UNIVERSAL-AUTONOMOUS-CODING-SYSTEM": "read-only template and contract library only"
+  },
+  "release_policy": {
+    "production_locked": true,
+    "protected_branch_merge_requires_explicit_operator_approval": true,
+    "production_deployment_requires_explicit_operator_approval": true,
+    "secret_mutation_requires_explicit_operator_approval": true,
+    "production_database_migration_requires_explicit_operator_approval": true,
+    "dns_billing_external_messaging_and_destructive_actions_locked": true,
+    "preview_branch_and_draft_pull_request_work_authorized": true
+  },
+  "source_priority": [
+    "current_operator_instruction",
+    "approved_source_truth_packet",
+    "runtime_evidence",
+    "base44_registry",
+    "github",
+    "google_drive",
+    "prior_summary",
+    "inference"
+  ],
+  "prohibitions": [
+    "no_new_competing_builder_repository",
+    "no_second_operator_dashboard",
+    "no_capability_claim_without_retrievable_evidence",
+    "no_vulnerable_public_database_expansion",
+    "no_production_mutation_from_repair_worker"
+  ]
+}
