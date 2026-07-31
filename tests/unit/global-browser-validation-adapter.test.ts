@@ -1,11 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { executeGlobalBrowserValidationAdapter } from '../../lib/factory/global-browser-validation-adapter'
-
-const originalNodeEnv = process.env.NODE_ENV
-
-afterEach(() => {
-  process.env.NODE_ENV = originalNodeEnv
-})
 
 function packet() {
   return {
