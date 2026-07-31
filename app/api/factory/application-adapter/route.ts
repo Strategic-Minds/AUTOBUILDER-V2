@@ -4,6 +4,7 @@ import {
   executeApplicationFactoryAdapter,
   validateApplicationAdapterEnvelope,
 } from '@/lib/factory/application-factory-adapter'
+import { executeSpecialistRepair } from '@/lib/factory/specialist-repair-executor'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -27,6 +28,7 @@ export async function GET() {
       'production',
     ],
     evidence_policy: 'fail_closed',
+    repair_policy: 'governed_branch_only',
     production_mutation: false,
   })
 }
@@ -48,14 +50,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const envelope = validateApplicationAdapterEnvelope(await request.json())
-    const result = await executeApplicationFactoryAdapter({
-      ...envelope,
-      payload: {
-        ...envelope.payload,
-        request_id: auth.request_id,
-        correlation_id: auth.correlation_id,
-      },
-    })
+    const payload = {
+      ...envelope.payload,
+      request_id: auth.request_id,
+      correlation_id: auth.correlation_id,
+      idempotency_key: auth.idempotency_key || envelope.payload.idempotency_key,
+    }
+    const result = envelope.adapter === 'repairer' && envelope.method === 'repair'
+      ? await executeSpecialistRepair(payload)
+      : await executeApplicationFactoryAdapter({ ...envelope, payload })
     return NextResponse.json(result, { status: result.ok === true ? 200 : 422 })
   } catch (error) {
     return NextResponse.json(
