@@ -28,6 +28,27 @@ revoke insert, update, delete on table public.xab_v3_receipts from anon, authent
 grant select, insert, update, delete on table public.xab_v3_browser_jobs to service_role;
 grant select, insert, update, delete on table public.xab_v3_receipts to service_role;
 
+-- Private, content-addressed BrowserWorker evidence. Service-role storage calls
+-- bypass bucket RLS; no public read or write policy is created by this migration.
+insert into storage.buckets (
+  id,
+  name,
+  public,
+  file_size_limit,
+  allowed_mime_types
+) values (
+  'xab-browser-evidence',
+  'xab-browser-evidence',
+  false,
+  20971520,
+  array['image/png', 'image/jpeg', 'image/webp', 'application/json']::text[]
+)
+on conflict (id) do update
+set public = false,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types,
+    updated_at = now();
+
 create or replace function public.xab_v3_record_browser_validation(
   p_project_id uuid,
   p_correlation_id text,
@@ -61,6 +82,15 @@ begin
   end if;
   if p_result::text like '%data:image/%' then
     raise exception 'inline screenshot data is prohibited; persist private artifacts first';
+  end if;
+  if coalesce((p_result #>> '{evidence,durable_artifact_persistence_proven}')::boolean, false) is not true then
+    raise exception 'durable browser artifact persistence is required';
+  end if;
+  if jsonb_array_length(coalesce(p_result #> '{evidence,artifact_refs}', '[]'::jsonb)) < 1 then
+    raise exception 'browser artifact references are required';
+  end if;
+  if nullif(p_result #>> '{evidence,manifest_ref,path}', '') is null then
+    raise exception 'browser evidence manifest reference is required';
   end if;
 
   insert into public.xab_v3_browser_jobs (
@@ -116,6 +146,7 @@ begin
       'evidence_digest', p_result #>> '{evidence,digest}',
       'promotion_eligible', coalesce((p_result #>> '{promotion,promotion_eligible}')::boolean, false),
       'artifact_refs', coalesce(p_result #> '{evidence,artifact_refs}', '[]'::jsonb),
+      'manifest_ref', p_result #> '{evidence,manifest_ref}',
       'production_mutation', false
     ),
     now()
