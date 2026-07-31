@@ -62,8 +62,8 @@ export function authorizeInternalRequest(
   // 3. Request timestamp expiry (optional — if provided, must be within 5 min)
   const ts = req.headers.get('x-request-timestamp');
   if (ts) {
-    const age = Date.now() - parseInt(ts, 10);
-    if (isNaN(age) || age > 5 * 60 * 1000 || age < 0) {
+    const age = Date.now() - Number.parseInt(ts, 10);
+    if (Number.isNaN(age) || age > 5 * 60 * 1000 || age < 0) {
       return { ...base, ok: false, state: 'EXPIRED', http_status: 401, error: 'Request timestamp expired or invalid' };
     }
   }
@@ -85,4 +85,3 @@ export function makeUnauthorizedResponse(ctx: AuthContext): Response {
     request_id: ctx.request_id, scope: ctx.scope,
   }), { status: ctx.http_status, headers: { 'Content-Type': 'application/json' } });
 }
-
