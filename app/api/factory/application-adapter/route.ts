@@ -4,6 +4,7 @@ import {
   executeApplicationFactoryAdapter,
   validateApplicationAdapterEnvelope,
 } from '@/lib/factory/application-factory-adapter'
+import { executeGlobalBrowserValidationAdapter } from '@/lib/factory/global-browser-validation-adapter'
 import { executeSpecialistRepair } from '@/lib/factory/specialist-repair-executor'
 
 export const runtime = 'nodejs'
@@ -28,6 +29,7 @@ export async function GET() {
       'production',
     ],
     evidence_policy: 'fail_closed',
+    browser_policy: 'global_multi_viewport_durable_evidence',
     repair_policy: 'governed_branch_only',
     production_mutation: false,
   })
@@ -58,7 +60,9 @@ export async function POST(request: NextRequest) {
     }
     const result = envelope.adapter === 'repairer' && envelope.method === 'repair'
       ? await executeSpecialistRepair(payload)
-      : await executeApplicationFactoryAdapter({ ...envelope, payload })
+      : envelope.adapter === 'browser' && envelope.method === 'validate'
+        ? await executeGlobalBrowserValidationAdapter(payload)
+        : await executeApplicationFactoryAdapter({ ...envelope, payload })
     return NextResponse.json(result, { status: result.ok === true ? 200 : 422 })
   } catch (error) {
     return NextResponse.json(
