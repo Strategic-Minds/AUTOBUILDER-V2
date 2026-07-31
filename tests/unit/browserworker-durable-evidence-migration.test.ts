@@ -36,10 +36,21 @@ describe('BrowserWorker durable evidence migration packet', () => {
     }
   })
 
-  it('rejects inline screenshot blobs and restricts the receipt RPC', () => {
+  it('provisions a private, bounded evidence bucket without a public policy', () => {
+    const sql = normalized(migrationPath)
+    expect(sql).toContain("'xab-browser-evidence', 'xab-browser-evidence', false, 20971520")
+    expect(sql).toContain("array['image/png', 'image/jpeg', 'image/webp', 'application/json']::text[]")
+    expect(sql).toContain('on conflict (id) do update set public = false')
+    expect(sql).not.toMatch(/create policy[^;]+xab-browser-evidence[^;]+(anon|authenticated|public)/)
+  })
+
+  it('rejects inline or unpersisted screenshot evidence and restricts the receipt RPC', () => {
     const sql = normalized(migrationPath)
     expect(sql).toContain("p_result::text like '%data:image/%'")
     expect(sql).toContain('inline screenshot data is prohibited')
+    expect(sql).toContain('durable browser artifact persistence is required')
+    expect(sql).toContain('browser artifact references are required')
+    expect(sql).toContain('browser evidence manifest reference is required')
     expect(sql).toContain('security definer set search_path = public, pg_temp')
     expect(sql).toContain('revoke all on function public.xab_v3_record_browser_validation')
     expect(sql).toContain('grant execute on function public.xab_v3_record_browser_validation')
@@ -51,5 +62,6 @@ describe('BrowserWorker durable evidence migration packet', () => {
     expect(rollback).toContain('drop function if exists public.xab_v3_record_browser_validation')
     expect(rollback).not.toMatch(/grant execute[^;]+to (public|anon|authenticated)/)
     expect(rollback).toContain('force row level security')
+    expect(rollback).not.toContain('delete from storage.buckets')
   })
 })
