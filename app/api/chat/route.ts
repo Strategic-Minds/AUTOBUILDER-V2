@@ -1,3 +1,4 @@
+import { rateLimit } from '@/lib/rate-limit';
 import { convertToModelMessages, streamText, tool, type UIMessage } from "ai";
 import { z } from "zod";
 
