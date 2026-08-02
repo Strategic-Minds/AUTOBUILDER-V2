@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit, handleRateLimitResponse } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,33 +21,58 @@ async function sbInsert(table: string, data: Record<string, unknown>) {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 20 messages per minute per IP
+  const rl = rateLimit(req, 20, 60000)
+  if (!rl.success) {
+    return handleRateLimitResponse(rl)
+  }
+
   try {
     const body = await req.json()
-    const { agent_id, agent_name, agent_emoji, message, message_type, thread_id } = body
+    const { roomId, content, role = 'user', agentId } = body
 
-    if (!message?.trim()) return NextResponse.json({ error: 'message required' }, { status: 400 })
-
-    const result = await sbInsert('agent_messages', {
-      agent_id: agent_id ?? 'human',
-      agent_name: agent_name ?? 'Jeremy',
-      agent_emoji: agent_emoji ?? '👤',
-      message: message.trim(),
-      message_type: message_type ?? 'chat',
-      thread_id: thread_id ?? null,
-      created_at: new Date().toISOString()
-    })
-
-    if (!result.ok && result.status !== 201) {
-      return NextResponse.json({ ok: true, stored: false, queued: true, message: message.trim(), timestamp: new Date().toISOString() })
+    if (!roomId || !content) {
+      return NextResponse.json({ ok: false, error: 'roomId and content required' }, { status: 400 })
     }
 
-    return NextResponse.json({ ok: true, stored: true, data: result.data, timestamp: new Date().toISOString() })
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: 'Send error', detail: msg }, { status: 500 })
+    const insert = await sbInsert('chatroom_messages', {
+      room_id: roomId,
+      content: String(content).slice(0, 8000),
+      role,
+      agent_id: agentId ?? null,
+      created_at: new Date().toISOString(),
+    })
+
+    if (!insert.ok) {
+      return NextResponse.json({ ok: false, error: 'Failed to persist message', detail: insert.data }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      ok: true,
+      message: insert.data,
+      'X-RateLimit-Remaining': rl.remaining,
+    })
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: 'Invalid request body' }, { status: 400 })
   }
 }
 
-export async function GET() {
-  return NextResponse.json({ ok: true, route: 'chatroom/send', method: 'POST required', timestamp: new Date().toISOString() })
+export async function GET(req: NextRequest) {
+  // Rate limit: 60 reads per minute per IP
+  const rl = rateLimit(req, 60, 60000)
+  if (!rl.success) return handleRateLimitResponse(rl)
+
+  const { searchParams } = new URL(req.url)
+  const roomId = searchParams.get('roomId')
+
+  if (!roomId) {
+    return NextResponse.json({ ok: false, error: 'roomId required' }, { status: 400 })
+  }
+
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/chatroom_messages?room_id=eq.${encodeURIComponent(roomId)}&order=created_at.asc&limit=100`,
+    { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+  )
+  const data = await r.json().catch(() => [])
+  return NextResponse.json({ ok: true, messages: data })
 }
