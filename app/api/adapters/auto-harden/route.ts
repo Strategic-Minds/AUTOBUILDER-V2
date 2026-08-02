@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { run } from '@/workers/adapters/auto-harden'
+import { rateLimit, handleRateLimitResponse } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,8 +9,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // RATE LIMIT
+  const rl = rateLimit(req, 30, 60000)
+  if (!rl.success) return handleRateLimitResponse(rl)
+  // AUTH: strict cron secret check (fail-closed)
   const secret = req.headers.get('x-cron-secret')
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
+  const expected = process.env.CRON_SECRET
+  if (!expected || secret !== expected) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
   const result = await run()
