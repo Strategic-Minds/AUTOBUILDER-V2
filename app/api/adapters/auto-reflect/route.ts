@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authorizeInternalRequest } from '@/lib/internal-auth'
+import { rateLimit, handleRateLimitResponse } from '@/lib/rate-limit'
 import { run } from '@/workers/adapters/auto-reflect'
 
 export const dynamic = 'force-dynamic'
@@ -10,6 +11,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // RATE LIMIT
+  const rl = rateLimit(req, 20, 60000)
+  if (!rl.success) return handleRateLimitResponse(rl)
   const auth = authorizeInternalRequest(req, 'jobs:repair')
   if (!auth.ok) {
     return NextResponse.json(
@@ -17,8 +21,7 @@ export async function POST(req: NextRequest) {
       { status: auth.http_status },
     )
   }
-
   const result = await run()
-  const statusCode = result.status === 'error' ? 500 : result.status === 'blocked' ? 409 : 200
-  return NextResponse.json({ ...result, request_id: auth.request_id, production_mutation: false }, { status: statusCode })
+  const statusCode = result.status === 'error' ? 500 : 200
+  return NextResponse.json(result, { status: statusCode })
 }
