@@ -1,4 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
+import { rateLimit, handleRateLimitResponse } from '@/lib/rate-limit'
+
 import { TOOLS_MANIFEST } from "./tools";
 import { HANDLERS, EnvConfig } from "./handlers";
 
@@ -46,7 +48,23 @@ export async function GET(req: NextRequest) {
   });
 }
 
+
+// AUTH: require MCP_API_KEY header or internal trusted token
+function authorizeMcpRequest(req: NextRequest): boolean {
+  const apiKey = process.env.MCP_API_KEY
+  if (!apiKey) return false // fail-closed when key not configured
+  const provided = req.headers.get('x-api-key') || req.headers.get('authorization')?.replace('Bearer ', '')
+  return provided === apiKey
+}
+
 export async function POST(req: NextRequest) {
+  // RATE LIMIT
+  const rl = rateLimit(req, 20, 60000)
+  if (!rl.success) return handleRateLimitResponse(rl)
+  // AUTH
+  if (!authorizeMcpRequest(req)) {
+    return NextResponse.json({ error: 'unauthorized', message: 'MCP_API_KEY required' }, { status: 401 })
+  }
   try {
     const body = await req.json();
     const { method, params } = body;

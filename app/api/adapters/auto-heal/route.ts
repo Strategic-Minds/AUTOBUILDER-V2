@@ -3,6 +3,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeInternalRequest } from '@/lib/internal-auth';
+import { rateLimit, handleRateLimitResponse } from '@/lib/rate-limit';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
@@ -23,6 +24,9 @@ async function sbOp<T = unknown>(path: string, method = 'GET', body?: unknown): 
 interface HealResult { trigger: string; job_id: string; before: Record<string,unknown>; after: Record<string,unknown>; receipt_id: string | null; verified: boolean; }
 
 export async function POST(req: NextRequest) {
+  // RATE LIMIT — 20 req/min
+  const rl = rateLimit(req, 20, 60000)
+  if (!rl.success) return handleRateLimitResponse(rl)
   const auth = authorizeInternalRequest(req, 'jobs:heal');
   if (!auth.ok) return new Response(JSON.stringify({ ok: false, state: auth.state, error: auth.error }), { status: auth.http_status });
 
