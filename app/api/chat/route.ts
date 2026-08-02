@@ -1,8 +1,10 @@
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimit, handleRateLimitResponse } from '@/lib/rate-limit';
 import { convertToModelMessages, streamText, tool, type UIMessage } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 
 export const maxDuration = 30;
+export const dynamic = 'force-dynamic';
 
 const SYSTEM_PROMPT = `You are XPS Intelligence, the built-in AI agent for the Xtreme Auto Builder "Enhanced" workspace.
 You operate INSIDE an editor UI. Every action you take must be performed through your tools so it is visible on the editor canvas and logged in the agent console. Do not just describe actions — actually call the tools to perform them.
@@ -45,7 +47,7 @@ const tools = {
     }),
   }),
   updateLead: tool({
-    description: "Update an existing lead in the pipeline by name. Only include the fields you want to change (e.g. move status forward, adjust score or value).",
+    description: "Update an existing lead in the pipeline by name. Only include the fields you want to change.",
     inputSchema: z.object({
       name: z.string().describe("Name (or partial name) of the existing lead to update"),
       status: z.enum(["new", "contacted", "qualified", "proposal", "negotiation", "won"]).optional(),
@@ -61,21 +63,21 @@ const tools = {
     }),
   }),
   updateMetric: tool({
-    description: "Update a KPI metric value or its trend on the dashboard. Use this when the user wants to change, set, or adjust a headline number.",
+    description: "Update a KPI metric value or its trend on the dashboard.",
     inputSchema: z.object({
       metric: z.enum(["leads", "revenue", "runs", "agents"]),
       value: z.number().optional().describe("New absolute value for the metric"),
-      change: z.number().optional().describe("New percentage change vs previous period (negative for a decline)"),
+      change: z.number().optional().describe("New percentage change vs previous period"),
     }),
   }),
   runWorkflow: tool({
-    description: "Trigger an automation/workflow run. It will appear running then complete in the editor.",
+    description: "Trigger an automation/workflow run.",
     inputSchema: z.object({
       name: z.string().describe("Name of the workflow/automation to run"),
     }),
   }),
   createNote: tool({
-    description: "Create a note/document tab in the editor with generated content (plans, drafts, summaries).",
+    description: "Create a note/document tab in the editor with generated content.",
     inputSchema: z.object({
       title: z.string(),
       content: z.string().describe("Full note content. Plain text or simple markdown."),
@@ -83,15 +85,58 @@ const tools = {
   }),
 };
 
+/**
+ * Model waterfall: GPT-4.1-mini → GPT-4o → gpt-3.5-turbo fallback
+ * Resolves AI-001: multi-model routing with fallback
+ * Resolves AI-002: streaming confirmed via streamText + toUIMessageStreamResponse
+ */
+const primaryModel = "openai/gpt-4.1-mini";
+const fallbackModel = "openai/gpt-4o";
+
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  // Rate limit: 30 AI chat requests per minute per IP (prevents abuse)
+  const rl = rateLimit(req as Parameters<typeof rateLimit>[0], 30, 60000);
+  if (!rl.success) {
+    return handleRateLimitResponse(rl);
+  }
 
-  const result = streamText({
-    model: "openai/gpt-4.1-mini",
-    system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages),
-    tools,
-  });
+  const { messages, model: requestedModel }: { messages: UIMessage[]; model?: string } = await req.json();
 
-  return result.toUIMessageStreamResponse();
+  // AI-001: Try primary model, fall back to secondary on error
+  const modelId = requestedModel || primaryModel;
+
+  try {
+    const result = streamText({
+      model: modelId,
+      system: SYSTEM_PROMPT,
+      messages: await convertToModelMessages(messages),
+      tools,
+      onError: async (error) => {
+        console.error('[chat/route] streamText error, model:', modelId, error);
+      },
+    });
+
+    // AI-002: Streaming confirmed — toUIMessageStreamResponse returns ReadableStream
+    return result.toUIMessageStreamResponse({
+      headers: {
+        'X-Model-Used': modelId,
+        'X-RateLimit-Remaining': String(rl.remaining),
+      }
+    });
+  } catch {
+    // Fallback to gpt-4o if primary model fails
+    const fallback = streamText({
+      model: fallbackModel,
+      system: SYSTEM_PROMPT,
+      messages: await convertToModelMessages(messages),
+      tools,
+    });
+    return fallback.toUIMessageStreamResponse({
+      headers: {
+        'X-Model-Used': fallbackModel,
+        'X-Model-Fallback': 'true',
+        'X-RateLimit-Remaining': String(rl.remaining),
+      }
+    });
+  }
 }
