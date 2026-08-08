@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "verified_at": "2026-07-31T05:15:00Z",
+  "states": ["UNCONFIGURED", "AUTHENTICATED", "READ_VERIFIED", "DRY_RUN_VERIFIED", "SANDBOX_WRITE_VERIFIED", "ROLLBACK_VERIFIED", "PRODUCTION_GATED", "DEGRADED", "DISABLED"],
+  "connectors": {
+    "github": {
+      "state": "SANDBOX_WRITE_VERIFIED",
+      "evidence": ["draft PR 58 branch writes", "draft PR 9 branch writes", "rollback commit metadata returned"],
+      "production_gate": "protected branch merge locked"
+    },
+    "vercel": {
+      "state": "READ_VERIFIED",
+      "evidence": ["AUTOBUILDER-V2 preview READY", "rollback production baseline discovered", "BrowserWorker previews READY"],
+      "production_gate": "promotion locked"
+    },
+    "supabase": {
+      "state": "READ_VERIFIED",
+      "evidence": ["project ACTIVE_HEALTHY", "factory queue and receipt tables inspected"],
+      "production_gate": "migration locked; shared public schema requires remediation"
+    },
+    "google_drive": {
+      "state": "READ_VERIFIED",
+      "evidence": ["Autonomous Mission Index retrieved", "mission workspace and receipt folders identified"],
+      "production_gate": "persistent manifest write not yet verified"
+    },
+    "browserworker": {
+      "state": "READ_VERIFIED",
+      "evidence": ["project and current preview deployments discovered", "AUTOBUILDER-V2 adapter invokes authenticated worker contract"],
+      "production_gate": "durable artifact and full operational parity proof required"
+    },
+    "base44": {
+      "state": "READ_VERIFIED",
+      "evidence": ["canonical app and registry entities queried"],
+      "production_gate": "registry update deferred until validated release receipt"
+    },
+    "auto_builder_2": {
+      "state": "DEGRADED",
+      "evidence": ["health check passed", "universal dry-run returned manual_receipt fallback"],
+      "production_gate": "provider adapter draft PR 9 must pass and be approved"
+    }
+  }
+}

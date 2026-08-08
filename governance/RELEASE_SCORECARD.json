@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "system": "Xtreme AI Builder",
+  "scored_at": "2026-07-31T05:35:00Z",
+  "engineering_release_candidate": {
+    "score": 100,
+    "maximum": 100,
+    "status": "PASS",
+    "dimensions": {
+      "single_authority_and_topology": { "earned": 15, "available": 15 },
+      "canonical_adapter_and_control_plane": { "earned": 20, "available": 20 },
+      "branch_only_atomic_repair_and_rollback": { "earned": 15, "available": 15 },
+      "multi_viewport_validator_and_evidence_contract": { "earned": 20, "available": 20 },
+      "security_dependency_static_unit_and_build_gates": { "earned": 20, "available": 20 },
+      "preview_and_fail_closed_release_contracts": { "earned": 10, "available": 10 }
+    },
+    "evidence": {
+      "canonical_application_pr": "https://github.com/Strategic-Minds/AUTOBUILDER-V2/pull/58",
+      "canonical_application_commit": "44ffe2c42dfe93140c5802b23a40d92ac270c3d2",
+      "canonical_application_master_validation": "PASS",
+      "canonical_application_playwright": "PASS",
+      "control_plane_pr": "https://github.com/XTREME-SYSTEMS/factory-control-plane/pull/9",
+      "control_plane_commit": "a15075726deb62276de2de01c4ad98bfdff339c7",
+      "control_plane_ci": "PASS",
+      "validator_pr": "https://github.com/Strategic-Minds/BROWSERWORKER/pull/10",
+      "validator_commit": "45248927300bae6b09d1600d9931c4835e3a5df9",
+      "validator_ci": "PASS",
+      "validator_dependency_audit": "ZERO_HIGH_SEVERITY_FINDINGS",
+      "validator_preview": "READY",
+      "validator_preview_deployment": "dpl_22Paxu63BjZE3pmrtWzuHdTv4aK8"
+    }
+  },
+  "live_autonomous_factory_readiness": {
+    "score": 65,
+    "maximum": 100,
+    "status": "BLOCKED_BY_PROTECTED_ACTIVATION_GATES",
+    "dimensions": {
+      "engineering_release_candidate": { "earned": 40, "available": 40 },
+      "ci_and_security_evidence": { "earned": 15, "available": 15 },
+      "preview_deployments": { "earned": 10, "available": 10 },
+      "protected_branch_merges": { "earned": 0, "available": 5 },
+      "cross_service_environment_and_auth_wiring": { "earned": 0, "available": 5 },
+      "supabase_security_migration_and_private_bucket": { "earned": 0, "available": 10 },
+      "authenticated_golden_path": { "earned": 0, "available": 10 },
+      "durable_supabase_and_drive_evidence_package": { "earned": 0, "available": 5 }
+    },
+    "blockers": [
+      "DRAFT_PULL_REQUESTS_NOT_MERGED",
+      "CANONICAL_ADAPTER_URL_AND_SHARED_BEARER_ENVIRONMENT_NOT_ACTIVATED",
+      "BROWSERWORKER_SUPABASE_LEASE_AND_PRIVATE_BUCKET_MIGRATION_NOT_APPLIED",
+      "PLAYWRIGHT_TEST_SECRET_NOT_CONFIGURED_FOR_AUTHENTICATED_HEARTBEAT_PROOF",
+      "AUTHENTICATED_IDEA_TO_RELEASE_CANDIDATE_GOLDEN_PATH_NOT_EXECUTED",
+      "RETRIEVABLE_SUPABASE_AND_GOOGLE_DRIVE_EVIDENCE_PACKAGE_NOT_PROVEN"
+    ],
+    "production_locked": true
+  },
+  "scoring_rule": "The live readiness score may equal 100 only when every protected activation dimension has executable, retrievable evidence. A passing build, READY preview, registered tool, document, or generated receipt ID cannot substitute for runtime proof."
+}

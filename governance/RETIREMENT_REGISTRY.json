@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "verified_at": "2026-07-31T05:15:00Z",
+  "policy": "inventory_then_archive_after_operator_approval; never delete during consolidation",
+  "retain": [
+    { "asset": "Strategic-Minds/AUTOBUILDER-V2", "role": "canonical application" },
+    { "asset": "XTREME-SYSTEMS/factory-control-plane", "role": "private MCP control plane" },
+    { "asset": "Strategic-Minds/BROWSERWORKER", "role": "private validator service" }
+  ],
+  "migration_sources": [
+    { "asset": "Strategic-Minds/XAB", "action": "inventory approved UI modules, migrate selectively, then archive" },
+    { "asset": "Strategic-Minds/UNIVERSAL-AUTONOMOUS-CODING-SYSTEM", "action": "retain templates only; remove runtime authority claims" }
+  ],
+  "archive_candidates": [
+    { "asset": "auto-builder-os", "status": "candidate_only", "gate": "feature and data inventory" },
+    { "asset": "XTREME-AI-BUILDER-V3 and earlier variants", "status": "candidate_only", "gate": "feature and data inventory" },
+    { "asset": "duplicate BrowserWorker preview projects", "status": "candidate_only", "gate": "domain and deployment dependency inventory" },
+    { "asset": "duplicate autonomous builder Vercel projects", "status": "candidate_only", "gate": "route, environment-name and domain inventory" }
+  ],
+  "destructive_actions_authorized": false
+}
