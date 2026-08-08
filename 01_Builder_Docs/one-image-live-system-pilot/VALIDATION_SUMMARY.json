@@ -1,0 +1,13 @@
+{
+  "project_id": "one-image-pipeline-pilot-001",
+  "status": "READY_FOR_BINARY_INPUTS",
+  "validation": "NOT TESTED",
+  "approved_image_present": false,
+  "workbook_present_in_repo": false,
+  "workbook_sha256": "d0a1f90dbf0299ef9008f8276dec0d23a23ab7ae46593c10fe15627ef2402ac2",
+  "preview_url": null,
+  "desktop_screenshot": null,
+  "mobile_screenshot": null,
+  "rollback_receipt": null,
+  "production_locked": true
+}

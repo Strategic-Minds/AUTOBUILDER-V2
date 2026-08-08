@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "workbooks": [
+    {
+      "workbook_id": "GOLDEN-V5-ONE-IMAGE",
+      "workbook_name": "GOLDEN_UNIVERSAL_ONE_IMAGE_AUTO_BUILDER_MASTER_WORKBOOK_V5_FINAL(1).xlsx",
+      "workbook_type": "LAUNCH_VALIDATION_WORKBOOK",
+      "repo_path": "01_Builder_Docs/one-image-live-system-pilot/inputs/GOLDEN_UNIVERSAL_ONE_IMAGE_AUTO_BUILDER_MASTER_WORKBOOK_V5_FINAL(1).xlsx",
+      "controller_path": "01_Builder_Docs/one-image-live-system-pilot/README.md",
+      "status": "pending_binary_upload",
+      "sha256": "d0a1f90dbf0299ef9008f8276dec0d23a23ab7ae46593c10fe15627ef2402ac2",
+      "source_of_truth_rank": "support/workbook_primary",
+      "production_gate": "locked_until_preview_route_screenshot_operator_approval"
+    }
+  ]
+}
