@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.1",
+  "system_validation_id": "UNIVERSAL-PROJECT-FACTORY-V7-20260726",
+  "system_slug": "universal-project-factory-v7-validation",
+  "system_name": "Universal Project Factory",
+  "validation_type": "universal_factory_system_validation",
+  "scope": {
+    "client_neutral": true,
+    "location_neutral": true,
+    "industry_neutral": true,
+    "brand_neutral": true,
+    "production_neutral": true
+  },
+  "phase": "strategy",
+  "queue_state": "active",
+  "source_truth": {
+    "workbook_id": "GUPF-V7-MASTER",
+    "workbook_sha256": "1980bc524a15a5c84a9dd596aaf726f869a7bd7dc7327b81d51968099662de5c",
+    "workbook_drive_url": "https://docs.google.com/spreadsheets/d/1dI9te-lQ5hbbKWqMxnxrnjIz-ag1afI4/edit?usp=drivesdk&ouid=112498193653988253810&rtpof=true&sd=true",
+    "universal_source_folder": "https://drive.google.com/drive/folders/1HScu68q5IeX_myPf0pFWTQuYyg7KtRO6",
+    "approval_state": "universal_scope_confirmed"
+  },
+  "repositories": {
+    "primary": "Strategic-Minds/AUTOBUILDER-V2",
+    "ui_donor": "Strategic-Minds/auto-builder-os",
+    "backend_donor": "Strategic-Minds/AUTO_BUILDER-V1"
+  },
+  "base44": {
+    "app_id": "6a4ae522852a5e08bfa42450",
+    "orchestrator": "@xab",
+    "builder": "@juno",
+    "research": "@scout",
+    "analytics": "@mira",
+    "deployment": "@rex",
+    "validation": "@kai"
+  },
+  "neutral_fixtures": [
+    "generic website project",
+    "generic web application project",
+    "generic workbook operating system",
+    "generic automation workflow",
+    "generic existing-repository improvement"
+  ],
+  "requirements": [
+    "initialize reusable project identifiers and project workbook copies",
+    "create agent jobs, queues, approvals, and memory namespaces",
+    "produce connector capability and source-truth audits",
+    "generate branch-safe implementation and validation packets",
+    "verify receipts, rollback, and Preview acceptance gates",
+    "prove no fixture leaks client, location, industry, or brand assumptions",
+    "perform at most three bounded repair passes per defect"
+  ],
+  "allowed_actions": [
+    "read connected source truth",
+    "create neutral synthetic fixtures",
+    "create system documentation",
+    "create branches",
+    "commit branch changes",
+    "open draft pull requests",
+    "create non-production previews",
+    "run sandbox and non-production tests",
+    "capture validation evidence",
+    "perform reversible branch repairs",
+    "write receipts"
+  ],
+  "blocked_actions": [
+    "create a real client brand without approval",
+    "introduce a city or industry-specific default",
+    "merge to default branch",
+    "production deployment",
+    "production database mutation",
+    "secret creation or replacement",
+    "domain or DNS changes",
+    "billing or payment actions",
+    "customer messages",
+    "public publishing",
+    "destructive actions"
+  ],
+  "completion_gate": "universal_fixture_matrix_passes_with_receipts_and_rollback_evidence",
+  "release_gate": "explicit_operator_production_approval"
+}

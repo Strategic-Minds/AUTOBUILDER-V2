@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.1",
+  "updated_at": "2026-07-26T05:15:00Z",
+  "workbooks": [
+    {
+      "workbook_id": "GUPF-V7-MASTER",
+      "workbook_name": "GOLDEN_UNIVERSAL_PROJECT_FACTORY_ALL_IN_ONE_CEILING_V7_MASTER.xlsx",
+      "workbook_type": "UNIVERSAL_PROJECT_FACTORY_CONTROL_WORKBOOK",
+      "repo_path": "01_Builder_Docs/golden-universal-project-factory-v7/GOLDEN_UNIVERSAL_PROJECT_FACTORY_ALL_IN_ONE_CEILING_V7_MASTER.xlsx",
+      "controller_path": "01_Builder_Docs/golden-universal-project-factory-v7/README.md",
+      "external_source_url": "https://docs.google.com/spreadsheets/d/1dI9te-lQ5hbbKWqMxnxrnjIz-ag1afI4/edit?usp=drivesdk&ouid=112498193653988253810&rtpof=true&sd=true",
+      "external_source_folder": "https://drive.google.com/drive/folders/1HScu68q5IeX_myPf0pFWTQuYyg7KtRO6",
+      "sha256": "1980bc524a15a5c84a9dd596aaf726f869a7bd7dc7327b81d51968099662de5c",
+      "status": "installed_controller_external_binary_verified",
+      "source_of_truth_rank": "workbook_primary",
+      "scope": "universal_client_neutral_location_neutral_industry_neutral_brand_neutral",
+      "production_gate": "locked_until_universal_fixture_validation_and_operator_approval",
+      "base44_app_id": "6a4ae522852a5e08bfa42450",
+      "system_validation_id": "UNIVERSAL-PROJECT-FACTORY-V7-20260726"
+    }
+  ]
+}
