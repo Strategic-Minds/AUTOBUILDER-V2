@@ -1,0 +1,40 @@
+{
+  "workbook_id": "ALPHA-HEADFUL-AI-001",
+  "phase": "DOCS_BRANCH_INSTALL",
+  "branch": "auto-builder/install-alpha-headful-ai-workbook",
+  "drive_binary": {
+    "status": "installed",
+    "file_id": "1LhzjZz_ReMAj4Ee4VaWJtGCEjMByKdCm",
+    "folder_id": "1p3ZK6g7ELt7IBd0nZQCyIrHAOfqkrCZW"
+  },
+  "github_binary": {
+    "status": "pending_binary_upload",
+    "reason": "Current GitHub connector writes UTF-8 files only."
+  },
+  "vercel": {
+    "project_id": "prj_qaUnGOL4MmPvm11Hqxp9Cn0YDfmv",
+    "project_name": "auto-builder",
+    "latest_deployment_state": "ERROR",
+    "production_deploy_authorized": false
+  },
+  "supabase": {
+    "project_id": "prhppuuwcnmfdhwsagug",
+    "project_name": "Strategic Minds Advisory",
+    "status": "ACTIVE_HEALTHY",
+    "migration_authorized": false
+  },
+  "mcp": {
+    "auto_builder_2_health": "ok",
+    "universal_job": "dry_run_complete",
+    "provider_adapter_status": "fallback_receipt_mode"
+  },
+  "release_gate": "locked",
+  "required_next_steps": [
+    "Upload workbook binary to branch through Codex or Git CLI",
+    "Validate checksum against Drive copy",
+    "Repair current Vercel project deployment error",
+    "Run build, lint, typecheck and Playwright smoke",
+    "Prepare Supabase development branch only after cost approval",
+    "Create preview deployment and collect screenshots"
+  ]
+}
