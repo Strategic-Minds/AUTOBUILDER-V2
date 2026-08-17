@@ -21,9 +21,42 @@ export VITE_BASE44_APP_BASE_URL=http://127.0.0.1:4173
 npm install --ignore-scripts --no-audit --no-fund
 npm run build
 npm run lint
-# Exact checkpoint typecheck is executed natively in Base44 /app. This mirror
-# is retained only to exercise the unchanged responsive Home/Browse behavior
-# on the existing GitHub Playwright runner.
+
+# Exact checkpoint install/build/lint/typecheck are validated natively in Base44 /app.
+# For the responsive browser-only leg, bypass Base44 auth and data transport inside
+# this disposable mirror so the test measures the checksum-locked Layout/Home/Browse
+# components and URL/ARIA behavior rather than external authentication availability.
+cat > src/api/base44Client.js <<'JS'
+export const base44 = {
+  entities: {
+    Item: {
+      list: async () => [],
+      filter: async () => [],
+    },
+  },
+}
+JS
+
+cat > src/App.jsx <<'JSX'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import Layout from '@/components/Layout'
+import Home from '@/pages/Home'
+import Browse from '@/pages/Browse'
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/browse" element={<Browse />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  )
+}
+JSX
+
 npm run dev -- --host 127.0.0.1 --port 4173 > /tmp/assetgrid-vite.log 2>&1 &
 echo $! > /tmp/assetgrid-vite.pid
 
