@@ -20,18 +20,6 @@ for (const device of cases) {
     if (msg.type() === 'error') browserErrors.push(`console: ${msg.text()}`)
   })
 
-  await page.route('**/api/**', async route => {
-    const url = route.request().url()
-    if (url.includes('public-settings')) {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ id: '6a828314b20a50cdd61fb765', public_settings: {} }),
-      })
-    }
-    return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
-  })
-
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' })
   await page.screenshot({ path: path.join('/tmp/assetgrid-smoke-artifacts', `${device.name}-bootstrap.png`), fullPage: true })
   const bodyText = (await page.locator('body').innerText()).slice(0, 3000)
