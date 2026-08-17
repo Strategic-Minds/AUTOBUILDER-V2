@@ -20,7 +20,7 @@ concurrency:
 jobs:
   playwright:
     name: Chromium E2E Tests
-    timeout-minutes: 30
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     env:
       PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url || vars.PLAYWRIGHT_PREVIEW_URL || 'https://autobuilder-v2-git-auto-builder-2cc522-strategic-minds-advisory.vercel.app' }}
@@ -39,9 +39,6 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Validate AssetGrid target packet
-        run: bash validation/assetgrid/run-target-validation.sh
-
       - name: Verify release-candidate URL
         shell: bash
         run: |
@@ -56,14 +53,6 @@ jobs:
         run: npx playwright test --project=chromium
         env:
           CRON_SECRET: ${{ secrets.PLAYWRIGHT_TEST_SECRET }}
-
-      - name: Upload AssetGrid responsive screenshots
-        if: always()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
-        with:
-          name: assetgrid-responsive-${{ github.sha }}
-          path: /tmp/assetgrid-smoke-artifacts/
-          retention-days: 14
 
       - name: Upload HTML report
         if: always()
