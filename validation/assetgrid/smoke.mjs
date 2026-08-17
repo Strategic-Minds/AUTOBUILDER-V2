@@ -14,6 +14,11 @@ fs.mkdirSync('/tmp/assetgrid-smoke-artifacts', { recursive: true })
 for (const device of cases) {
   const context = await browser.newContext({ viewport: { width: device.width, height: device.height } })
   const page = await context.newPage()
+  const browserErrors = []
+  page.on('pageerror', error => browserErrors.push(`pageerror: ${error.message}`))
+  page.on('console', msg => {
+    if (msg.type() === 'error') browserErrors.push(`console: ${msg.text()}`)
+  })
 
   await page.route('**/api/**', async route => {
     const url = route.request().url()
@@ -28,7 +33,11 @@ for (const device of cases) {
   })
 
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' })
-  await page.getByText('Find the right asset. License it clearly. Keep building.').waitFor({ state: 'visible' })
+  await page.screenshot({ path: path.join('/tmp/assetgrid-smoke-artifacts', `${device.name}-bootstrap.png`), fullPage: true })
+  const bodyText = (await page.locator('body').innerText()).slice(0, 3000)
+  console.log(`ASSETGRID_BOOTSTRAP ${device.name} url=${page.url()} body=${JSON.stringify(bodyText)} errors=${JSON.stringify(browserErrors)}`)
+
+  await page.getByText('Find the right asset. License it clearly. Keep building.').waitFor({ state: 'visible', timeout: 10000 })
   await page.getByRole('link', { name: 'AssetGrid home' }).waitFor({ state: 'visible' })
   await page.screenshot({ path: path.join('/tmp/assetgrid-smoke-artifacts', `${device.name}-home.png`), fullPage: true })
 
