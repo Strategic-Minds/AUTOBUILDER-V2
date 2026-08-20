@@ -6,12 +6,15 @@ on:
   workflow_dispatch:
     inputs:
       preview_url:
-        description: 'Release candidate URL to test'
-        required: false
+        description: 'Current release-candidate Vercel URL to test'
+        required: true
         type: string
 
 permissions:
   contents: read
+  issues: read
+  pull-requests: read
+  statuses: read
 
 concurrency:
   group: playwright-${{ github.ref }}
@@ -22,8 +25,6 @@ jobs:
     name: Chromium E2E Tests
     timeout-minutes: 20
     runs-on: ubuntu-latest
-    env:
-      PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url || vars.PLAYWRIGHT_PREVIEW_URL || 'https://autobuilder-v2-git-auto-builder-2cc522-strategic-minds-advisory.vercel.app' }}
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -36,18 +37,59 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Verify release-candidate URL
+      - name: Resolve exact current release-candidate URL
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MANUAL_PREVIEW_URL: ${{ inputs.preview_url || '' }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          test -n "$PLAYWRIGHT_BASE_URL"
-          if ! echo "$PLAYWRIGHT_BASE_URL" | grep -Eq '^https://[^/]+\.vercel\.app/?$'; then
+          set -euo pipefail
+          PREVIEW_URL="$MANUAL_PREVIEW_URL"
+
+          if [ -z "$PREVIEW_URL" ]; then
+            if [ -z "$PR_NUMBER" ]; then
+              echo 'ERROR: CURRENT_PR_PREVIEW_URL_REQUIRED'
+              exit 1
+            fi
+
+            VERCEL_STATE='missing'
+            for attempt in $(seq 1 36); do
+              VERCEL_STATE=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/status" --jq '[.statuses[] | select(.context == "Vercel")][0].state // "missing"')
+              if [ "$VERCEL_STATE" = 'success' ]; then break; fi
+              if [ "$VERCEL_STATE" = 'failure' ] || [ "$VERCEL_STATE" = 'error' ]; then
+                echo "ERROR: VERCEL_HEAD_STATUS_FAILED state=$VERCEL_STATE"
+                exit 1
+              fi
+              echo "VERCEL_HEAD_STATUS=$VERCEL_STATE attempt=$attempt"
+              sleep 5
+            done
+            if [ "$VERCEL_STATE" != 'success' ]; then
+              echo "ERROR: VERCEL_HEAD_STATUS_NOT_READY state=$VERCEL_STATE"
+              exit 1
+            fi
+
+            PREVIEW_URL=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.user.login == "vercel[bot]") | .body' \
+              | grep -Eo 'https://[A-Za-z0-9.-]+\.vercel\.app' \
+              | tail -n 1 || true)
+          fi
+
+          if [ -z "$PREVIEW_URL" ]; then
+            echo 'ERROR: CURRENT_PR_PREVIEW_URL_REQUIRED'
+            exit 1
+          fi
+          if ! echo "$PREVIEW_URL" | grep -Eq '^https://[^/]+\.vercel\.app/?$'; then
             echo 'ERROR: Target must be an HTTPS Vercel deployment URL.'
             exit 1
           fi
-          echo "Target: $PLAYWRIGHT_BASE_URL"
+
+          echo "PLAYWRIGHT_BASE_URL=$PREVIEW_URL" >> "$GITHUB_ENV"
+          echo "CURRENT_PR_PREVIEW_URL=$PREVIEW_URL"
+          echo "VERCEL_HEAD_STATUS=success"
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Run Playwright headless tests
         run: npx playwright test --project=chromium

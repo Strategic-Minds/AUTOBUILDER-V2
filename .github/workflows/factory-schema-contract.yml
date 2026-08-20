@@ -5,6 +5,8 @@ on:
     paths:
       - 'supabase/migrations/20260728062000_factory_quality_schema_contract.sql'
       - 'supabase/rollback/20260728062000_factory_quality_schema_contract.down.sql'
+      - 'supabase/migrations/20260820065000_autonomous_backlog_engine_v1.sql'
+      - 'supabase/rollback/20260820065000_autonomous_backlog_engine_v1.down.sql'
       - 'supabase/validation/**'
       - '.github/workflows/factory-schema-contract.yml'
   workflow_dispatch:
@@ -87,6 +89,113 @@ jobs:
           echo 'ISOLATED_DATABASE=postgres:16'
           echo 'FORWARD_MIGRATION=PASS'
           echo 'ACCESS_MODEL=PASS'
+          echo 'ROLLBACK=PASS'
+          echo 'REAPPLY=PASS'
+          echo 'PRODUCTION_MUTATION=false'
+
+  backlog-engine-migration-contract:
+    name: Backlog Engine apply, security, rollback, and reapply
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: backlog_validation
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d backlog_validation"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5433
+      PGDATABASE: backlog_validation
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGOPTIONS: '-c client_min_messages=warning'
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Verify PostgreSQL
+        run: psql --version && pg_isready
+
+      - name: Create Supabase-compatible roles
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$ BEGIN CREATE ROLE anon NOLOGIN; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+          DO $$ BEGIN CREATE ROLE authenticated NOLOGIN; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+          DO $$ BEGIN CREATE ROLE service_role NOLOGIN; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+          SQL
+
+      - name: Apply Backlog Engine migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260820065000_autonomous_backlog_engine_v1.sql
+
+      - name: Run read-only validation SQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260820065000_autonomous_backlog_engine_v1.validation.sql
+
+      - name: Assert RLS and service-role-only access
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$
+          DECLARE missing_rls integer;
+          BEGIN
+            SELECT count(*) INTO missing_rls
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'public'
+              AND c.relname LIKE 'backlog_%'
+              AND c.relkind = 'r'
+              AND c.relrowsecurity = false;
+            IF missing_rls <> 0 THEN RAISE EXCEPTION 'backlog tables missing RLS: %', missing_rls; END IF;
+          END $$;
+
+          DO $$
+          DECLARE exposed integer;
+          BEGIN
+            SELECT count(*) INTO exposed
+            FROM information_schema.role_table_grants
+            WHERE table_schema = 'public'
+              AND table_name LIKE 'backlog_%'
+              AND grantee IN ('anon','authenticated');
+            IF exposed <> 0 THEN RAISE EXCEPTION 'backlog privileges exposed to browser roles: %', exposed; END IF;
+          END $$;
+          SQL
+
+      - name: Execute Backlog Engine rollback
+        run: psql -v ON_ERROR_STOP=1 -f supabase/rollback/20260820065000_autonomous_backlog_engine_v1.down.sql
+
+      - name: Verify Backlog Engine rollback removed data plane
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$
+          BEGIN
+            IF to_regclass('public.backlog_execution_leases') IS NOT NULL THEN RAISE EXCEPTION 'backlog_execution_leases survived rollback'; END IF;
+            IF to_regclass('public.backlog_opportunities') IS NOT NULL THEN RAISE EXCEPTION 'backlog_opportunities survived rollback'; END IF;
+          END $$;
+          SQL
+
+      - name: Reapply Backlog Engine migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260820065000_autonomous_backlog_engine_v1.sql
+
+      - name: Revalidate Backlog Engine contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/validation/20260820065000_autonomous_backlog_engine_v1.validation.sql
+
+      - name: Emit Backlog Engine receipt summary
+        run: |
+          echo 'BACKLOG_SCHEMA_CONTRACT=PASS'
+          echo 'ISOLATED_DATABASE=postgres:16'
+          echo 'FORWARD_MIGRATION=PASS'
+          echo 'RLS=PASS'
+          echo 'BROWSER_ROLE_EXPOSURE=0'
           echo 'ROLLBACK=PASS'
           echo 'REAPPLY=PASS'
           echo 'PRODUCTION_MUTATION=false'
