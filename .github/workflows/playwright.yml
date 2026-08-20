@@ -54,7 +54,17 @@ jobs:
               exit 1
             fi
 
-            VERCEL_STATE=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/status" --jq '[.statuses[] | select(.context == "Vercel")][0].state // "missing"')
+            VERCEL_STATE='missing'
+            for attempt in $(seq 1 36); do
+              VERCEL_STATE=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/status" --jq '[.statuses[] | select(.context == "Vercel")][0].state // "missing"')
+              if [ "$VERCEL_STATE" = 'success' ]; then break; fi
+              if [ "$VERCEL_STATE" = 'failure' ] || [ "$VERCEL_STATE" = 'error' ]; then
+                echo "ERROR: VERCEL_HEAD_STATUS_FAILED state=$VERCEL_STATE"
+                exit 1
+              fi
+              echo "VERCEL_HEAD_STATUS=$VERCEL_STATE attempt=$attempt"
+              sleep 5
+            done
             if [ "$VERCEL_STATE" != 'success' ]; then
               echo "ERROR: VERCEL_HEAD_STATUS_NOT_READY state=$VERCEL_STATE"
               exit 1
