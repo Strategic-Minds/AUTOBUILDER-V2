@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runBacklogHeartbeat } from '@/lib/backlog-engine/run-heartbeat'
 import { authorizeInternalRequest } from '@/lib/internal-auth'
+import { processMonitorFinalBuildSafely } from '@/lib/factory/safe-monitor-final-build'
 import { claimFactoryJob, failFactoryJob, processFactoryJob } from '@/lib/factory/xab-v3-store'
 
 const EXPECTED_SCHEDULE = '*/5 * * * *'
@@ -51,7 +52,12 @@ export async function runFactoryCron(req: NextRequest) {
       if (!job) break
 
       try {
-        const result = await processFactoryJob(job)
+        // monitor_final_build used to inherit an automatic Preview -> Production
+        // promotion. It now has a dedicated fail-closed processor. All other
+        // factory jobs keep using the canonical XAB v3 processor.
+        const result = job.type === 'monitor_final_build'
+          ? await processMonitorFinalBuildSafely(job)
+          : await processFactoryJob(job)
         results.push({ job_id: job.id, type: job.type, state: 'completed', result })
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
