@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       preview_url:
-        description: 'Release candidate URL to test'
-        required: false
+        description: 'Current release-candidate Vercel URL to test'
+        required: true
         type: string
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     env:
-      PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url || vars.PLAYWRIGHT_PREVIEW_URL || 'https://autobuilder-v2-git-auto-builder-2cc522-strategic-minds-advisory.vercel.app' }}
+      PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url || '' }}
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -39,10 +39,15 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Verify release-candidate URL
+      - name: Require current release-candidate URL
         shell: bash
         run: |
-          test -n "$PLAYWRIGHT_BASE_URL"
+          if [ -z "$PLAYWRIGHT_BASE_URL" ]; then
+            echo 'ERROR: CURRENT_PR_PREVIEW_URL_REQUIRED'
+            echo 'A pull-request run must not reuse a hard-coded or stale deployment.'
+            echo 'Dispatch this workflow on the PR branch with its current Vercel Preview URL.'
+            exit 1
+          fi
           if ! echo "$PLAYWRIGHT_BASE_URL" | grep -Eq '^https://[^/]+\.vercel\.app/?$'; then
             echo 'ERROR: Target must be an HTTPS Vercel deployment URL.'
             exit 1
