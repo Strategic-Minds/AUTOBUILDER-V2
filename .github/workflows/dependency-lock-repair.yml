@@ -1,0 +1,89 @@
+name: Dependency Lock Repair
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package-lock.json'
+      - 'package.json'
+      - '.github/workflows/dependency-lock-repair.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependency-lock-repair-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repair-nanoid:
+    name: Repair nanoid advisory only
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the feature branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Capture pre-repair lock graph
+        run: cp package-lock.json /tmp/package-lock.before.json
+
+      - name: Repair production audit findings in lockfile only
+        run: npm audit fix --package-lock-only --omit=dev --audit-level=high
+
+      - name: Prove package.json was not changed
+        run: git diff --exit-code -- package.json
+
+      - name: Prove only the nanoid lock entry changed
+        run: |
+          node <<'NODE'
+          const fs = require('fs')
+          const before = JSON.parse(fs.readFileSync('/tmp/package-lock.before.json', 'utf8'))
+          const after = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'))
+          const keys = new Set([...Object.keys(before.packages || {}), ...Object.keys(after.packages || {})])
+          const changed = []
+          for (const key of keys) {
+            if (JSON.stringify(before.packages?.[key]) !== JSON.stringify(after.packages?.[key])) changed.push(key)
+          }
+          const allowed = new Set(['node_modules/nanoid'])
+          const unexpected = changed.filter((key) => !allowed.has(key))
+          if (unexpected.length) {
+            console.error('Unexpected lockfile package changes:', unexpected)
+            process.exit(1)
+          }
+          const version = after.packages?.['node_modules/nanoid']?.version || ''
+          if (version !== '3.3.18') {
+            console.error(`Expected nanoid 3.3.18, got ${version || 'missing'}`)
+            process.exit(1)
+          }
+          console.log(`LOCK_REPAIR_ALLOWED_CHANGES=${changed.join(',')}`)
+          console.log(`NANOID_VERSION=${version}`)
+          NODE
+
+      - name: Verify production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Commit repaired lockfile to feature branch
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo 'LOCKFILE_ALREADY_REPAIRED=true'
+            exit 0
+          fi
+          git config user.name 'AUTO BUILDER Validator'
+          git config user.email 'actions@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'fix(deps): update nanoid to 3.3.18'
+          git push origin HEAD:${{ github.event.pull_request.head.ref || github.ref_name }}
+          echo 'PRODUCTION_MUTATION=false'
