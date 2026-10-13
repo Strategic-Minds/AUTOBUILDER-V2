@@ -1,0 +1,10 @@
+{
+  "name": "@strategic-minds/bridge-sync-preview",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Non-mutating Base44/X1 foresight synchronization preview only",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}
